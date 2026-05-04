@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Button } from "@leadpilot/ui/components/ui/button";
 
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
@@ -9,15 +10,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
           LeadPilot AI
         </Link>
         <nav className="mt-8 grid gap-2 text-sm">
-          <Link href="/admin" className="rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">
-            Dashboard
-          </Link>
-          <Link href="/admin/leads" className="rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">
-            Leads
-          </Link>
-          <Link href="/book" className="rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">
-            Public form
-          </Link>
+          <Button asChild variant="ghost" className="justify-start text-slate-700">
+            <Link href="/admin">Dashboard</Link>
+          </Button>
+          <Button asChild variant="ghost" className="justify-start text-slate-700">
+            <Link href="/admin/leads">Leads</Link>
+          </Button>
+          <Button asChild variant="ghost" className="justify-start text-slate-700">
+            <Link href="/book">Public form</Link>
+          </Button>
         </nav>
       </aside>
       <main className="md:pl-64">

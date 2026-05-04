@@ -6,11 +6,13 @@ import { Button } from "@leadpilot/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@leadpilot/ui/components/ui/card";
 import { Input } from "@leadpilot/ui/components/ui/input";
 import { Label } from "@leadpilot/ui/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@leadpilot/ui/components/ui/select";
 import { Textarea } from "@leadpilot/ui/components/ui/textarea";
 
 export default function BookPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [serviceSlug, setServiceSlug] = useState("consultation");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,6 +34,7 @@ export default function BookPage() {
       setStatus("success");
       setMessage(`Request received. Lead ${lead.id} is now in the dashboard.`);
       event.currentTarget.reset();
+      setServiceSlug("consultation");
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Could not submit request");
@@ -66,11 +69,16 @@ export default function BookPage() {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="serviceSlug">Service</Label>
-                <select id="serviceSlug" name="serviceSlug" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
-                  <option value="consultation">Consultation</option>
-                  <option value="haircut">Haircut</option>
-                  <option value="event-photography">Event photography</option>
-                </select>
+                <Select name="serviceSlug" value={serviceSlug} onValueChange={setServiceSlug}>
+                  <SelectTrigger id="serviceSlug">
+                    <SelectValue placeholder="Select a service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="consultation">Consultation</SelectItem>
+                    <SelectItem value="haircut">Haircut</SelectItem>
+                    <SelectItem value="event-photography">Event photography</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="preferredDate">Preferred date</Label>

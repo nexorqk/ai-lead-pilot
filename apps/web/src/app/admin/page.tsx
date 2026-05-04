@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { getDashboardSummary, getLeads, type LeadListItem, type DashboardSummary } from "@/lib/api";
 import { Badge } from "@/components/badge";
+import { Button } from "@leadpilot/ui/components/ui/button";
 
 export default async function AdminPage() {
   let summary: DashboardSummary | undefined;
@@ -20,9 +21,9 @@ export default async function AdminPage() {
           <p className="text-sm font-medium uppercase tracking-wide text-accent">Admin dashboard</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Lead command center</h1>
         </div>
-        <Link href="/admin/leads" className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white">
-          View all leads
-        </Link>
+        <Button asChild>
+          <Link href="/admin/leads">View all leads</Link>
+        </Button>
       </div>
       {error ? <p className="mt-6 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">API unavailable: {error}</p> : null}
       <section className="mt-6 grid gap-4 md:grid-cols-4">

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { analyzeLead } from "@/lib/api";
+import { Button } from "@leadpilot/ui/components/ui/button";
 
 export function AnalyzeButton({ leadId }: { leadId: string }) {
   const router = useRouter();
@@ -24,13 +25,13 @@ export function AnalyzeButton({ leadId }: { leadId: string }) {
 
   return (
     <div>
-      <button
+      <Button
         onClick={runAnalysis}
         disabled={status === "loading"}
-        className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+        className="bg-accent text-accent-foreground hover:bg-accent/90"
       >
         {status === "loading" ? "Analyzing..." : "Run AI analysis"}
-      </button>
+      </Button>
       {status === "error" ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
     </div>
   );

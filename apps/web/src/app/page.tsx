@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@leadpilot/ui/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -9,9 +10,9 @@ export default function HomePage() {
           <Link href="/admin" className="text-slate-600 hover:text-ink">
             Admin
           </Link>
-          <Link href="/book" className="rounded-md bg-ink px-4 py-2 font-medium text-white hover:bg-slate-800">
-            Open intake
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/book">Open intake</Link>
+          </Button>
         </nav>
       </header>
       <section className="border-y border-line bg-slate-50">
@@ -25,12 +26,12 @@ export default function HomePage() {
               Capture service requests, classify intent and urgency, and give small-business owners the next best action from one focused dashboard.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/book" className="rounded-md bg-accent px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800">
-                Submit a lead
-              </Link>
-              <Link href="/admin/leads" className="rounded-md border border-line px-5 py-3 text-sm font-semibold text-ink hover:bg-white">
-                Review leads
-              </Link>
+              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Link href="/book">Submit a lead</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/admin/leads">Review leads</Link>
+              </Button>
             </div>
           </div>
           <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
