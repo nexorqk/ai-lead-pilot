@@ -6,11 +6,13 @@ import { createLeadAnalysisProvider } from "@leadpilot/ai";
 import { env } from "./config/env.js";
 import { LeadService } from "./services/lead-service.js";
 import { AuthService } from "./services/auth-service.js";
+import { BookingService } from "./services/booking-service.js";
 import { sendError } from "./utils/errors.js";
 import { healthRoutes } from "./routes/health.js";
 import { leadRoutes } from "./routes/leads.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { authRoutes } from "./routes/auth.js";
+import { bookingRoutes } from "./routes/bookings.js";
 import { createLeadAnalysisQueue } from "./queue/lead-analysis-queue.js";
 
 const app = Fastify({
@@ -27,6 +29,7 @@ const aiProvider = createLeadAnalysisProvider({
 });
 const leadService = new LeadService(prisma, aiProvider);
 const authService = new AuthService(prisma, env.SESSION_TTL_DAYS);
+const bookingService = new BookingService(prisma);
 const analysisQueueResources = env.REDIS_URL ? createLeadAnalysisQueue(env.REDIS_URL) : undefined;
 
 app.register(cors, {
@@ -59,8 +62,14 @@ await app.register(leadRoutes, {
 });
 await app.register(dashboardRoutes, {
   leadService,
+  bookingService,
   authService,
   prisma,
+  cookieName: env.SESSION_COOKIE_NAME
+});
+await app.register(bookingRoutes, {
+  bookingService,
+  authService,
   cookieName: env.SESSION_COOKIE_NAME
 });
 

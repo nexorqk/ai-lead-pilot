@@ -61,6 +61,15 @@ export const LoginInputSchema = z.object({
   password: z.string().min(8).max(200)
 });
 
+export const BookingStatusSchema = z.enum(["requested", "confirmed", "cancelled", "completed"]);
+
+export const CreateLeadBookingInputSchema = z.object({
+  startsAt: z.string().datetime(),
+  serviceId: z.string().cuid().optional().or(z.literal("")),
+  notes: z.string().trim().max(1000).optional().or(z.literal("")),
+  status: BookingStatusSchema.default("requested")
+});
+
 export type CustomerInput = z.infer<typeof CustomerInputSchema>;
 export type CreateLeadInput = z.infer<typeof CreateLeadInputSchema>;
 export type LeadAiAnalysis = z.infer<typeof LeadAiAnalysisSchema>;
@@ -68,6 +77,8 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 export type LeadAiAnalysisJobStatus = z.infer<typeof LeadAiAnalysisJobStatusSchema>;
 export type LeadAnalysisQueueJob = z.infer<typeof LeadAnalysisQueueJobSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
+export type BookingStatus = z.infer<typeof BookingStatusSchema>;
+export type CreateLeadBookingInput = z.infer<typeof CreateLeadBookingInputSchema>;
 
 export type ApiError = {
   error: {

@@ -4,6 +4,7 @@ import { Badge } from "@/components/badge";
 import { getLead } from "@/lib/api";
 import { asArray } from "@/lib/format";
 import { AnalyzeButton } from "./analyze-button";
+import { BookingForm } from "./booking-form";
 import { requireCurrentUser } from "@/lib/server-auth";
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +57,25 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <div className="mt-6">
               <h2 className="font-semibold text-ink">Message</h2>
               <p className="mt-3 rounded-md border border-line bg-white p-4 leading-7 text-slate-700">{lead.messages[0]?.body}</p>
+            </div>
+            <div className="mt-6 rounded-lg border border-line bg-white p-5">
+              <h2 className="font-semibold text-ink">Booking</h2>
+              {lead.bookings.length ? (
+                <div className="mt-4 grid gap-3">
+                  {lead.bookings.map((booking) => (
+                    <div key={booking.id} className="rounded-md bg-slate-50 px-4 py-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-ink">{new Date(booking.startsAt).toLocaleString()}</span>
+                        <Badge value={booking.status}>{booking.status}</Badge>
+                      </div>
+                      <p className="mt-1 text-slate-600">{booking.service?.name ?? "General service"}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">No booking has been created from this lead.</p>
+              )}
+              <BookingForm leadId={lead.id} />
             </div>
           </section>
           <aside className="rounded-lg border border-line bg-white p-6 shadow-sm">

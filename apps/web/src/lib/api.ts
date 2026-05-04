@@ -55,6 +55,7 @@ export type LeadDetail = LeadListItem & {
     confidence: number;
     createdAt: string;
   }>;
+  bookings: Booking[];
 };
 
 export type DashboardSummary = {
@@ -65,6 +66,25 @@ export type DashboardSummary = {
   hotLeads: number;
   warmLeads: number;
   coldLeads: number;
+  upcomingBookings: Booking[];
+};
+
+export type Booking = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+  notes?: string | null;
+  customer: { name: string; email?: string | null; phone?: string | null };
+  service?: { id: string; name: string; slug: string; durationMin: number } | null;
+  lead?: { id: string } | null;
+};
+
+export type AvailabilityRule = {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 };
 
 export type CurrentUser = {
@@ -107,6 +127,18 @@ export async function getLeads(cookieHeader?: string) {
   });
 }
 
+export async function getBookings(cookieHeader?: string) {
+  return request<Booking[]>("/api/bookings", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getAvailability(cookieHeader?: string) {
+  return request<AvailabilityRule[]>("/api/availability", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
 export async function getLead(id: string, cookieHeader?: string) {
   return request<LeadDetail>(`/api/leads/${id}`, {
     headers: cookieHeader ? { cookie: cookieHeader } : undefined
@@ -123,5 +155,15 @@ export async function createLead(input: CreateLeadInput) {
 export async function analyzeLead(id: string) {
   return request<{ leadId: string; analysisJobId: string; status: string; bullmqJobId?: string | number }>(`/api/leads/${id}/analyze`, {
     method: "POST"
+  });
+}
+
+export async function createLeadBooking(
+  leadId: string,
+  input: { startsAt: string; serviceId?: string; notes?: string; status?: "requested" | "confirmed" }
+) {
+  return request<Booking>(`/api/leads/${leadId}/bookings`, {
+    method: "POST",
+    body: JSON.stringify(input)
   });
 }

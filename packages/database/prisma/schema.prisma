@@ -93,6 +93,7 @@ model Organization {
   leads         Lead[]
   services      Service[]
   bookings      Booking[]
+  availabilityRules AvailabilityRule[]
   notifications Notification[]
   auditLogs     AuditLog[]
 }
@@ -143,6 +144,21 @@ model Service {
   bookings       Booking[]
 
   @@unique([organizationId, slug])
+  @@index([organizationId, active])
+}
+
+model AvailabilityRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, dayOfWeek, startTime, endTime])
   @@index([organizationId, active])
 }
 

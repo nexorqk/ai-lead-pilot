@@ -63,6 +63,26 @@ async function main() {
     )
   );
 
+  for (const dayOfWeek of [1, 2, 3, 4, 5]) {
+    await prisma.availabilityRule.upsert({
+      where: {
+        organizationId_dayOfWeek_startTime_endTime: {
+          organizationId: organization.id,
+          dayOfWeek,
+          startTime: "09:00",
+          endTime: "17:00"
+        }
+      },
+      update: { active: true },
+      create: {
+        organizationId: organization.id,
+        dayOfWeek,
+        startTime: "09:00",
+        endTime: "17:00"
+      }
+    });
+  }
+
   const seedLeads = [
     {
       customer: { name: "Alex Carter", email: "alex@example.com", phone: "+1555010101" },

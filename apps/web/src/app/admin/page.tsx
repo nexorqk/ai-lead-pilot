@@ -43,6 +43,25 @@ export default async function AdminPage() {
       </section>
       <section className="mt-6 rounded-lg border border-line bg-white shadow-sm">
         <div className="border-b border-line px-5 py-4">
+          <h2 className="font-semibold text-ink">Upcoming bookings</h2>
+        </div>
+        <div className="divide-y divide-line">
+          {(summary?.upcomingBookings ?? []).map((booking) => (
+            <div key={booking.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div>
+                <p className="font-medium text-ink">{booking.customer.name}</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {new Date(booking.startsAt).toLocaleString()} · {booking.service?.name ?? "General"}
+                </p>
+              </div>
+              <Badge value={booking.status}>{booking.status}</Badge>
+            </div>
+          ))}
+          {!summary?.upcomingBookings?.length ? <p className="px-5 py-8 text-sm text-slate-600">No upcoming bookings.</p> : null}
+        </div>
+      </section>
+      <section className="mt-6 rounded-lg border border-line bg-white shadow-sm">
+        <div className="border-b border-line px-5 py-4">
           <h2 className="font-semibold text-ink">Recent leads</h2>
         </div>
         <div className="divide-y divide-line">

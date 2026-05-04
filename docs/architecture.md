@@ -19,3 +19,5 @@ The first vertical slice is:
 7. Worker processes the job, calls the configured AI provider, validates the output, stores `LeadAiAnalysis`, updates lead status/quality, and marks the job completed or failed.
 
 Organization scoping is enforced in lead queries. Admin requests authenticate with an HttpOnly session cookie and resolve scope from `OrganizationMember`. Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
+
+Bookings are organization-scoped and can be created from leads. The booking service validates active availability rules and rejects overlaps with requested or confirmed bookings before writing the booking.
