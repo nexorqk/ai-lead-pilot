@@ -1,6 +1,9 @@
+import crypto from "node:crypto";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import { prisma } from "@leadpilot/database";
 import { createLeadAnalysisProvider } from "@leadpilot/ai";
 import { env } from "./config/env.js";
@@ -20,6 +23,10 @@ import { createLeadAnalysisQueue } from "./queue/lead-analysis-queue.js";
 import { createNotificationQueue } from "./queue/notification-queue.js";
 
 const app = Fastify({
+  genReqId: (request) => {
+    const incoming = request.headers["x-request-id"];
+    return typeof incoming === "string" && incoming.length <= 128 ? incoming : crypto.randomUUID();
+  },
   logger: {
     level: env.LOG_LEVEL,
     redact: ["req.headers.authorization", "req.headers.cookie"]
@@ -43,13 +50,23 @@ app.register(cors, {
   origin: env.NODE_ENV === "production" ? env.WEB_ORIGIN : true,
   credentials: true
 });
+app.register(helmet, {
+  contentSecurityPolicy: false
+});
+app.register(rateLimit, {
+  global: false
+});
 app.register(cookie, {
   secret: env.SESSION_SECRET
 });
 
-app.setErrorHandler((error, _request, reply) => {
-  app.log.error(error);
-  return sendError(reply, error, env.NODE_ENV === "production");
+app.addHook("onRequest", async (request, reply) => {
+  reply.header("x-request-id", request.id);
+});
+
+app.setErrorHandler((error, request, reply) => {
+  request.log.error(error);
+  return sendError(request, reply, error, env.NODE_ENV === "production");
 });
 
 await app.register(healthRoutes, { prisma, redisUrl: env.REDIS_URL });
@@ -57,7 +74,11 @@ await app.register(authRoutes, {
   authService,
   cookieName: env.SESSION_COOKIE_NAME,
   sessionTtlDays: env.SESSION_TTL_DAYS,
-  production: env.NODE_ENV === "production"
+  production: env.NODE_ENV === "production",
+  rateLimit: {
+    max: env.AUTH_RATE_LIMIT_MAX,
+    timeWindow: env.AUTH_RATE_LIMIT_WINDOW
+  }
 });
 await app.register(leadRoutes, {
   leadService,
@@ -67,7 +88,11 @@ await app.register(leadRoutes, {
   prisma,
   analysisQueue: analysisQueueResources?.queue,
   cookieName: env.SESSION_COOKIE_NAME,
-  configuredDemoOrganizationId: env.DEMO_ORGANIZATION_ID
+  configuredDemoOrganizationId: env.DEMO_ORGANIZATION_ID,
+  publicRateLimit: {
+    max: env.PUBLIC_RATE_LIMIT_MAX,
+    timeWindow: env.PUBLIC_RATE_LIMIT_WINDOW
+  }
 });
 await app.register(dashboardRoutes, {
   leadService,

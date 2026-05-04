@@ -7,6 +7,9 @@ Current controls:
 - API organization scope is resolved from `OrganizationMember` for authenticated admin requests.
 - Role checks are enforced for AI analysis actions.
 - Notification and audit list endpoints require authenticated organization membership.
+- API responses include request IDs for support/debugging.
+- Security headers are applied with Fastify Helmet.
+- Public lead submission and login routes are rate limited.
 - API input and AI output are validated with Zod.
 - API errors avoid stack traces in production.
 - Admin data access is organization-scoped.

@@ -19,6 +19,10 @@ type RouteOptions = {
   analysisQueue?: Queue<LeadAnalysisQueueJob>;
   cookieName: string;
   configuredDemoOrganizationId?: string;
+  publicRateLimit: {
+    max: number;
+    timeWindow: string;
+  };
 };
 
 export const leadRoutes: FastifyPluginAsync<RouteOptions> = async (app, options) => {
@@ -33,24 +37,32 @@ export const leadRoutes: FastifyPluginAsync<RouteOptions> = async (app, options)
     return options.leadService.getLead(context.organizationId, id);
   });
 
-  app.post("/api/leads", async (request, reply) => {
-    const organizationId = await getDemoOrganizationId(options.prisma, options.configuredDemoOrganizationId);
-    const lead = await options.leadService.createLead(organizationId, request.body);
-    await options.notificationService.notifyOrganization({
-      organizationId,
-      type: "lead_created",
-      subject: `New lead from ${lead.customer.name}`,
-      body: `${lead.customer.name} submitted a new lead. Review it in LeadPilot AI.`
-    });
-    await options.auditService.record({
-      organizationId,
-      action: "lead.created",
-      entityType: "Lead",
-      entityId: lead.id,
-      metadata: { source: "public_form", customer: lead.customer.name }
-    });
-    return reply.status(201).send(lead);
-  });
+  app.post(
+    "/api/leads",
+    {
+      config: {
+        rateLimit: options.publicRateLimit
+      }
+    },
+    async (request, reply) => {
+      const organizationId = await getDemoOrganizationId(options.prisma, options.configuredDemoOrganizationId);
+      const lead = await options.leadService.createLead(organizationId, request.body);
+      await options.notificationService.notifyOrganization({
+        organizationId,
+        type: "lead_created",
+        subject: `New lead from ${lead.customer.name}`,
+        body: `${lead.customer.name} submitted a new lead. Review it in LeadPilot AI.`
+      });
+      await options.auditService.record({
+        organizationId,
+        action: "lead.created",
+        entityType: "Lead",
+        entityId: lead.id,
+        metadata: { source: "public_form", customer: lead.customer.name }
+      });
+      return reply.status(201).send(lead);
+    }
+  );
 
   app.post("/api/leads/:id/analyze", async (request) => {
     const { id } = LeadIdParamsSchema.parse(request.params);

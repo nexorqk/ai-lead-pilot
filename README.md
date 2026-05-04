@@ -47,6 +47,8 @@ Important variables:
 - `SESSION_SECRET`: at least 32 random characters for signing session cookies.
 - `SESSION_COOKIE_NAME`: defaults to `leadpilot_session`.
 - `SESSION_TTL_DAYS`: session lifetime in days.
+- `PUBLIC_RATE_LIMIT_MAX` / `PUBLIC_RATE_LIMIT_WINDOW`: public lead submission limit.
+- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW`: login limit.
 - `AI_PROVIDER`: `mock` by default, or `openai`.
 - `OPENAI_API_KEY`: required only when `AI_PROVIDER=openai`.
 - `NEXT_PUBLIC_API_URL`: browser-visible API base URL.
@@ -73,6 +75,8 @@ demo-password-123
 ```
 
 `pnpm db:migrate:dev` requires the development Postgres container or another reachable PostgreSQL database.
+
+The current test suite includes contract coverage for shared Zod schemas and deterministic mock AI analysis behavior. Additional API/database integration tests are still planned.
 
 ## API Slice
 
@@ -102,6 +106,8 @@ Lead analysis is asynchronous: the API creates a persisted analysis job and enqu
 Bookings can be created from leads by authenticated owner/manager/staff users. The API checks active organization availability rules and prevents overlapping requested or confirmed bookings.
 
 Notifications are queued with BullMQ and processed by the worker with a mock email provider. Notification attempts are stored in the database, and lead/booking actions write audit log entries.
+
+The API adds request IDs, security headers, stable error bodies with `requestId`, and rate limits on public lead submission and login.
 
 ## Docker
 
@@ -139,6 +145,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 - Password reset, registration, invite flows, and multi-organization switching are not implemented yet.
 - Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
+- API/database integration test coverage is still limited; current tests focus on shared contracts and AI provider behavior.
 - Production Compose is not fully hardened or load-tested.
 - Booking models exist, but full calendar availability and conflict prevention are future work.
 - The mock AI provider is deterministic for local development; OpenAI output is schema-validated when enabled.

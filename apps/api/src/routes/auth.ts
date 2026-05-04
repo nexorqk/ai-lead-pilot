@@ -6,21 +6,33 @@ export const authRoutes: FastifyPluginAsync<{
   cookieName: string;
   sessionTtlDays: number;
   production: boolean;
+  rateLimit: {
+    max: number;
+    timeWindow: string;
+  };
 }> = async (app, options) => {
-  app.post("/api/auth/login", async (request, reply) => {
-    const result = await options.authService.login(request.body);
-    reply.setCookie(options.cookieName, result.token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: options.production,
-      path: "/",
-      maxAge: options.sessionTtlDays * 24 * 60 * 60
-    });
-    return {
-      user: result.user,
-      expiresAt: result.expiresAt.toISOString()
-    };
-  });
+  app.post(
+    "/api/auth/login",
+    {
+      config: {
+        rateLimit: options.rateLimit
+      }
+    },
+    async (request, reply) => {
+      const result = await options.authService.login(request.body);
+      reply.setCookie(options.cookieName, result.token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: options.production,
+        path: "/",
+        maxAge: options.sessionTtlDays * 24 * 60 * 60
+      });
+      return {
+        user: result.user,
+        expiresAt: result.expiresAt.toISOString()
+      };
+    }
+  );
 
   app.post("/api/auth/logout", async (request, reply) => {
     await options.authService.logout(request.cookies[options.cookieName]);
