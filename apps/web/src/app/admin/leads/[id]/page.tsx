@@ -66,6 +66,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               </div>
               <AnalyzeButton leadId={lead.id} />
             </div>
+            {lead.aiAnalysisJobs[0] ? (
+              <div className="mt-5 rounded-md border border-line bg-slate-50 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-ink">Analysis job</span>
+                  <Badge value={lead.aiAnalysisJobs[0].status}>{lead.aiAnalysisJobs[0].status}</Badge>
+                </div>
+                {lead.aiAnalysisJobs[0].error ? <p className="mt-2 text-rose-700">{lead.aiAnalysisJobs[0].error}</p> : null}
+              </div>
+            ) : null}
             {lead.aiAnalyses[0] ? (
               <div className="mt-6 grid gap-5">
                 <div>

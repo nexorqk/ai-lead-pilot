@@ -15,8 +15,8 @@ export function AnalyzeButton({ leadId }: { leadId: string }) {
     setError("");
     try {
       await analyzeLead(leadId);
-      router.refresh();
       setStatus("idle");
+      router.refresh();
     } catch (caught) {
       setStatus("error");
       setError(caught instanceof Error ? caught.message : "Analysis failed");

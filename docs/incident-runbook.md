@@ -19,6 +19,7 @@ docker compose -f docker-compose.prod.yml logs --tail=200 postgres
 Escalation notes:
 
 - If database readiness fails, verify disk space, credentials, and migration state.
-- If Redis readiness fails, lead analysis jobs may not process asynchronously, but synchronous API analysis can still work.
+- If Redis readiness fails, new lead analysis jobs cannot be enqueued.
+- If analysis jobs stay `pending` or `processing`, inspect worker logs and Redis connectivity.
 - If Caddy fails, verify DNS and placeholder domains.
 - Do not run restore against production without an explicit restore plan and a recent backup.

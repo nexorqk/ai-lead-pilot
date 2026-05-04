@@ -1,14 +1,18 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { PrismaClient } from "@prisma/client";
+import type { Queue } from "bullmq";
+import type { LeadAnalysisQueueJob } from "@leadpilot/shared";
 import { LeadIdParamsSchema } from "@leadpilot/shared";
 import type { LeadService } from "../services/lead-service.js";
 import { getDemoOrganizationId } from "../services/organization-context.js";
 import { requireRole, type AuthService } from "../services/auth-service.js";
+import { AppError } from "../utils/errors.js";
 
 type RouteOptions = {
   leadService: LeadService;
   authService: AuthService;
   prisma: PrismaClient;
+  analysisQueue?: Queue<LeadAnalysisQueueJob>;
   cookieName: string;
   configuredDemoOrganizationId?: string;
 };
@@ -35,6 +39,57 @@ export const leadRoutes: FastifyPluginAsync<RouteOptions> = async (app, options)
     const { id } = LeadIdParamsSchema.parse(request.params);
     const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);
     requireRole(context, ["owner", "manager", "staff"]);
-    return options.leadService.analyzeLead(context.organizationId, id);
+    if (!options.analysisQueue) {
+      throw new AppError(503, "ANALYSIS_QUEUE_UNAVAILABLE", "Lead analysis queue is not configured");
+    }
+
+    const analysisJob = await options.leadService.createAnalysisJob(context.organizationId, id);
+    try {
+      const queued = await options.analysisQueue.add(
+        "analyze-lead",
+        {
+          organizationId: context.organizationId,
+          leadId: id,
+          analysisJobId: analysisJob.id
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: 100,
+          removeOnFail: 250
+        }
+      );
+      await options.prisma.leadAiAnalysisJob.update({
+        where: { id: analysisJob.id },
+        data: { bullmqJobId: queued.id }
+      });
+      return {
+        leadId: id,
+        analysisJobId: analysisJob.id,
+        status: analysisJob.status,
+        bullmqJobId: queued.id
+      };
+    } catch (error) {
+      await options.prisma.leadAiAnalysisJob.update({
+        where: { id: analysisJob.id },
+        data: {
+          status: "failed",
+          completedAt: new Date(),
+          error: error instanceof Error ? error.message : String(error)
+        }
+      });
+      throw error;
+    }
+  });
+
+  app.get("/api/leads/:id/analysis-job", async (request) => {
+    const { id } = LeadIdParamsSchema.parse(request.params);
+    const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);
+    await options.leadService.getLead(context.organizationId, id);
+    const latestJob = await options.prisma.leadAiAnalysisJob.findFirst({
+      where: { leadId: id },
+      orderBy: { createdAt: "desc" }
+    });
+    return { job: latestJob };
   });
 };

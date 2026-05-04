@@ -32,6 +32,14 @@ export type LeadListItem = {
   service?: { name: string; slug: string } | null;
   messages: Array<{ body: string }>;
   aiAnalyses: Array<{ summary: string; nextAction: string; confidence: number; missingFields: unknown }>;
+  aiAnalysisJobs: Array<{
+    id: string;
+    status: string;
+    error?: string | null;
+    createdAt: string;
+    startedAt?: string | null;
+    completedAt?: string | null;
+  }>;
 };
 
 export type LeadDetail = LeadListItem & {
@@ -113,5 +121,7 @@ export async function createLead(input: CreateLeadInput) {
 }
 
 export async function analyzeLead(id: string) {
-  return request(`/api/leads/${id}/analyze`, { method: "POST" });
+  return request<{ leadId: string; analysisJobId: string; status: string; bullmqJobId?: string | number }>(`/api/leads/${id}/analyze`, {
+    method: "POST"
+  });
 }

@@ -2,17 +2,28 @@ import { Worker } from "bullmq";
 import { Redis } from "ioredis";
 import pino from "pino";
 import { prisma } from "@leadpilot/database";
-import { LeadAiAnalysisSchema } from "@leadpilot/shared";
-import { LeadAnalysisJobSchema, leadAnalysisQueueName } from "./queue.js";
+import { createLeadAnalysisProvider } from "@leadpilot/ai";
+import { LeadAnalysisQueueJobSchema } from "@leadpilot/shared";
+import { leadAnalysisQueueName } from "./queue.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
+const aiProvider = createLeadAnalysisProvider({
+  provider: process.env.AI_PROVIDER === "openai" ? "openai" : "mock",
+  openAiApiKey: process.env.OPENAI_API_KEY,
+  openAiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini"
+});
 
 const worker = new Worker(
   leadAnalysisQueueName,
   async (job) => {
-    const data = LeadAnalysisJobSchema.parse(job.data);
+    const data = LeadAnalysisQueueJobSchema.parse(job.data);
+    await prisma.leadAiAnalysisJob.update({
+      where: { id: data.analysisJobId },
+      data: { status: "processing", startedAt: new Date(), error: null, bullmqJobId: job.id }
+    });
+
     const lead = await prisma.lead.findFirst({
       where: { id: data.leadId, organizationId: data.organizationId },
       include: {
@@ -25,16 +36,14 @@ const worker = new Worker(
       throw new Error("Lead was not found or has no message");
     }
 
-    const analysis = LeadAiAnalysisSchema.parse({
-      intent: "book_service",
-      service: lead.service?.name ?? "consultation",
-      urgency: lead.messages[0].body.toLowerCase().includes("today") ? "today" : "this_week",
-      budget: "unknown",
-      leadQuality: lead.messages[0].body.toLowerCase().includes("urgent") ? "hot" : "warm",
-      missingFields: [lead.customer.email ? undefined : "email", lead.customer.phone ? undefined : "phone"].filter(Boolean),
-      summary: `${lead.customer.name} asked about ${lead.service?.name ?? "a service"}: ${lead.messages[0].body.slice(0, 220)}`,
-      nextAction: "Review the lead and reply with available appointment options.",
-      confidence: 0.8
+    const analysis = await aiProvider.analyze({
+      customerName: lead.customer.name,
+      customerEmail: lead.customer.email,
+      customerPhone: lead.customer.phone,
+      message: lead.messages[0].body,
+      serviceName: lead.service?.name,
+      preferredDate: lead.preferredDate,
+      preferredTime: lead.preferredTime
     });
 
     await prisma.$transaction(async (tx) => {
@@ -55,18 +64,40 @@ const worker = new Worker(
       });
       await tx.lead.update({
         where: { id: lead.id },
-        data: { quality: analysis.leadQuality, status: "qualified" }
+        data: {
+          quality: analysis.leadQuality,
+          status: analysis.leadQuality === "cold" ? "new" : "qualified"
+        }
+      });
+      await tx.leadAiAnalysisJob.update({
+        where: { id: data.analysisJobId },
+        data: { status: "completed", completedAt: new Date(), error: null }
       });
     });
 
-    return { leadId: lead.id };
+    return { leadId: lead.id, analysisJobId: data.analysisJobId };
   },
   { connection }
 );
 
 worker.on("ready", () => logger.info({ queue: leadAnalysisQueueName }, "Worker ready"));
 worker.on("completed", (job) => logger.info({ jobId: job.id }, "Lead analysis completed"));
-worker.on("failed", (job, error) => logger.error({ jobId: job?.id, error }, "Lead analysis failed"));
+worker.on("failed", (job, error) => {
+  const parsed = LeadAnalysisQueueJobSchema.safeParse(job?.data);
+  if (parsed.success) {
+    void prisma.leadAiAnalysisJob
+      .update({
+        where: { id: parsed.data.analysisJobId },
+        data: {
+          status: "failed",
+          completedAt: new Date(),
+          error: error instanceof Error ? error.message : String(error)
+        }
+      })
+      .catch((updateError) => logger.error({ updateError }, "Failed to record analysis job failure"));
+  }
+  logger.error({ jobId: job?.id, error }, "Lead analysis failed");
+});
 
 async function shutdown() {
   logger.info("Shutting down worker");

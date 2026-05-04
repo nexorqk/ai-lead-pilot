@@ -84,9 +84,12 @@ Implemented endpoints:
 - `GET /api/leads/:id`
 - `POST /api/leads`
 - `POST /api/leads/:id/analyze`
+- `GET /api/leads/:id/analysis-job`
 - `GET /api/dashboard/summary`
 
 Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
+
+Lead analysis is asynchronous: the API creates a persisted analysis job and enqueues BullMQ work in Redis. The worker consumes the queue, calls the configured AI provider, stores validated analysis output, and updates the job status.
 
 ## Docker
 
@@ -123,7 +126,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 ## Known Tradeoffs
 
 - Password reset, registration, invite flows, and multi-organization switching are not implemented yet.
-- The worker has a BullMQ processor, while API-triggered analysis currently runs synchronously for the first slice.
+- Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
 - Production Compose is not fully hardened or load-tested.
 - Booking models exist, but full calendar availability and conflict prevention are future work.
 - The mock AI provider is deterministic for local development; OpenAI output is schema-validated when enabled.

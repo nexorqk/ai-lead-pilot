@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { CreateLeadInputSchema, LeadAiAnalysisSchema, type CreateLeadInput } from "@leadpilot/shared";
-import type { LeadAnalysisProvider } from "../ai/provider.js";
+import type { LeadAnalysisProvider } from "@leadpilot/ai";
 import { AppError } from "../utils/errors.js";
 
 export class LeadService {
@@ -58,7 +58,8 @@ export class LeadService {
         customer: true,
         service: true,
         messages: { orderBy: { createdAt: "asc" }, take: 1 },
-        aiAnalyses: { orderBy: { createdAt: "desc" }, take: 1 }
+        aiAnalyses: { orderBy: { createdAt: "desc" }, take: 1 },
+        aiAnalysisJobs: { orderBy: { createdAt: "desc" }, take: 1 }
       }
     });
   }
@@ -71,6 +72,7 @@ export class LeadService {
         service: true,
         messages: { orderBy: { createdAt: "asc" } },
         aiAnalyses: { orderBy: { createdAt: "desc" } },
+        aiAnalysisJobs: { orderBy: { createdAt: "desc" }, take: 5 },
         bookings: { orderBy: { startsAt: "desc" } }
       }
     });
@@ -134,6 +136,46 @@ export class LeadService {
       nextAction: saved.nextAction,
       confidence: saved.confidence
     };
+  }
+
+  async createAnalysisJob(organizationId: string, id: string) {
+    const lead = await this.getLead(organizationId, id);
+    if (!lead.messages[0]?.body) {
+      throw new AppError(422, "LEAD_HAS_NO_MESSAGE", "Lead has no message to analyze");
+    }
+
+    return this.prisma.leadAiAnalysisJob.create({
+      data: {
+        leadId: lead.id,
+        status: "pending"
+      }
+    });
+  }
+
+  async processAnalysisJob(organizationId: string, id: string, jobId: string) {
+    await this.prisma.leadAiAnalysisJob.update({
+      where: { id: jobId },
+      data: { status: "processing", startedAt: new Date(), error: null }
+    });
+
+    try {
+      const analysis = await this.analyzeLead(organizationId, id);
+      await this.prisma.leadAiAnalysisJob.update({
+        where: { id: jobId },
+        data: { status: "completed", completedAt: new Date(), error: null }
+      });
+      return analysis;
+    } catch (error) {
+      await this.prisma.leadAiAnalysisJob.update({
+        where: { id: jobId },
+        data: {
+          status: "failed",
+          completedAt: new Date(),
+          error: error instanceof Error ? error.message : String(error)
+        }
+      });
+      throw error;
+    }
   }
 
   async dashboardSummary(organizationId: string) {
