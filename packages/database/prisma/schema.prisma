@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  owner
+  manager
+  staff
+  viewer
+}
+
+enum LeadStatus {
+  new
+  qualified
+  contacted
+  booked
+  lost
+}
+
+enum LeadQuality {
+  hot
+  warm
+  cold
+  unknown
+}
+
+enum LeadUrgency {
+  today
+  this_week
+  this_month
+  flexible
+  unknown
+}
+
+enum BookingStatus {
+  requested
+  confirmed
+  cancelled
+  completed
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+}
+
+model User {
+  id           String               @id @default(cuid())
+  email        String               @unique
+  name         String
+  passwordHash String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  memberships  OrganizationMember[]
+  auditLogs    AuditLog[]
+}
+
+model Organization {
+  id            String               @id @default(cuid())
+  name          String
+  slug          String               @unique
+  timezone      String               @default("UTC")
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  members       OrganizationMember[]
+  customers     Customer[]
+  leads         Lead[]
+  services      Service[]
+  bookings      Booking[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           UserRole     @default(viewer)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String?
+  phone          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leads          Lead[]
+  bookings       Booking[]
+
+  @@index([organizationId])
+  @@index([organizationId, email])
+  @@index([organizationId, phone])
+}
+
+model Service {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  durationMin    Int          @default(60)
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leads          Lead[]
+  bookings       Booking[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, active])
+}
+
+model Lead {
+  id             String           @id @default(cuid())
+  organizationId String
+  customerId     String
+  serviceId      String?
+  status         LeadStatus       @default(new)
+  quality        LeadQuality      @default(unknown)
+  source         String           @default("public_form")
+  preferredDate  String?
+  preferredTime  String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service        Service?         @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  messages       LeadMessage[]
+  aiAnalyses     LeadAiAnalysis[]
+  bookings       Booking[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, quality])
+  @@index([organizationId, createdAt])
+  @@index([customerId])
+}
+
+model LeadMessage {
+  id        String   @id @default(cuid())
+  leadId    String
+  body      String
+  channel   String   @default("web_form")
+  createdAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+}
+
+model LeadAiAnalysis {
+  id            String      @id @default(cuid())
+  leadId        String
+  provider      String
+  intent        String
+  service       String
+  urgency       LeadUrgency @default(unknown)
+  budget        String
+  leadQuality   LeadQuality @default(unknown)
+  missingFields Json
+  summary       String
+  nextAction    String
+  confidence    Float
+  createdAt     DateTime    @default(now())
+  lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  organizationId String
+  customerId     String
+  leadId         String?
+  serviceId      String?
+  startsAt       DateTime
+  endsAt         DateTime
+  status         BookingStatus @default(requested)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lead           Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  service        Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, startsAt])
+  @@index([customerId])
+  @@index([leadId])
+}
+
+model Notification {
+  id             String             @id @default(cuid())
+  organizationId String
+  channel        String
+  recipient      String
+  subject        String?
+  body           String
+  status         NotificationStatus @default(pending)
+  error          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}

@@ -1,0 +1,11 @@
+{
+	email {$CADDY_EMAIL}
+}
+
+app.leadpilot.example.com {
+	reverse_proxy web:3000
+}
+
+api.leadpilot.example.com {
+	reverse_proxy api:4000
+}

@@ -1,0 +1,24 @@
+{
+  "name": "leadpilot-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered lead intake, booking, and CRM platform foundation.",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @leadpilot/api --filter @leadpilot/web --filter @leadpilot/worker dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm --filter @leadpilot/shared build && pnpm --filter @leadpilot/database build && pnpm --filter @leadpilot/ui build && pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @leadpilot/database db:generate",
+    "db:migrate:dev": "pnpm --filter @leadpilot/database db:migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @leadpilot/database db:migrate:deploy",
+    "db:seed": "pnpm --filter @leadpilot/database db:seed",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.14",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
