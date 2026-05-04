@@ -43,7 +43,10 @@ Important variables:
 
 - `DATABASE_URL`: PostgreSQL connection string.
 - `REDIS_URL`: Redis connection string.
-- `DEMO_ORGANIZATION_ID`: temporary organization context. If empty, the API uses the first seeded organization.
+- `DEMO_ORGANIZATION_ID`: public intake organization context until public business pages support organization slugs.
+- `SESSION_SECRET`: at least 32 random characters for signing session cookies.
+- `SESSION_COOKIE_NAME`: defaults to `leadpilot_session`.
+- `SESSION_TTL_DAYS`: session lifetime in days.
 - `AI_PROVIDER`: `mock` by default, or `openai`.
 - `OPENAI_API_KEY`: required only when `AI_PROVIDER=openai`.
 - `NEXT_PUBLIC_API_URL`: browser-visible API base URL.
@@ -62,6 +65,13 @@ pnpm db:migrate:deploy
 pnpm db:seed
 ```
 
+Seed creates a demo owner account:
+
+```txt
+owner@demo.leadpilot.local
+demo-password-123
+```
+
 `pnpm db:migrate:dev` requires the development Postgres container or another reachable PostgreSQL database.
 
 ## API Slice
@@ -76,7 +86,7 @@ Implemented endpoints:
 - `POST /api/leads/:id/analyze`
 - `GET /api/dashboard/summary`
 
-The current admin API uses a documented temporary demo organization context until real auth and roles are implemented.
+Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
 
 ## Docker
 
@@ -112,7 +122,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Known Tradeoffs
 
-- Authentication, sessions, roles, and protected admin routes are planned for Phase 2.
+- Password reset, registration, invite flows, and multi-organization switching are not implemented yet.
 - The worker has a BullMQ processor, while API-triggered analysis currently runs synchronously for the first slice.
 - Production Compose is not fully hardened or load-tested.
 - Booking models exist, but full calendar availability and conflict prevention are future work.

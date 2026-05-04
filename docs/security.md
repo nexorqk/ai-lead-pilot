@@ -3,6 +3,9 @@
 Current controls:
 
 - No secrets are committed; `.env` and `.env.production` are ignored.
+- Admin routes require database-backed HttpOnly cookie sessions.
+- API organization scope is resolved from `OrganizationMember` for authenticated admin requests.
+- Role checks are enforced for AI analysis actions.
 - API input and AI output are validated with Zod.
 - API errors avoid stack traces in production.
 - Admin data access is organization-scoped.
@@ -12,7 +15,8 @@ Current controls:
 
 Temporary shortcut:
 
-- Full authentication and role checks are not implemented. The API uses a clearly named demo organization context until Phase 2.
+- Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
+- Registration, password reset, account lockout, and MFA are not implemented.
 
 Do not add:
 

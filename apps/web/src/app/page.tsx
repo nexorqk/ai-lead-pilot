@@ -7,6 +7,9 @@ export default function HomePage() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <div className="text-lg font-semibold text-ink">LeadPilot AI</div>
         <nav className="flex items-center gap-3 text-sm">
+          <Link href="/login" className="text-slate-600 hover:text-ink">
+            Login
+          </Link>
           <Link href="/admin" className="text-slate-600 hover:text-ink">
             Admin
           </Link>

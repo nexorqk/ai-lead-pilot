@@ -47,9 +47,18 @@ export const LeadIdParamsSchema = z.object({
   id: z.string().cuid()
 });
 
+export const UserRoleSchema = z.enum(["owner", "manager", "staff", "viewer"]);
+
+export const LoginInputSchema = z.object({
+  email: z.string().trim().email().max(255),
+  password: z.string().min(8).max(200)
+});
+
 export type CustomerInput = z.infer<typeof CustomerInputSchema>;
 export type CreateLeadInput = z.infer<typeof CreateLeadInputSchema>;
 export type LeadAiAnalysis = z.infer<typeof LeadAiAnalysisSchema>;
+export type UserRole = z.infer<typeof UserRoleSchema>;
+export type LoginInput = z.infer<typeof LoginInputSchema>;
 
 export type ApiError = {
   error: {

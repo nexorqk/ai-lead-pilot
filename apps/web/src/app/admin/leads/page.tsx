@@ -2,18 +2,20 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { Badge } from "@/components/badge";
 import { getLeads, type LeadListItem } from "@/lib/api";
+import { requireCurrentUser } from "@/lib/server-auth";
 
 export default async function LeadsPage() {
+  const { user, cookieHeader } = await requireCurrentUser();
   let leads: LeadListItem[] = [];
   let error: string | null = null;
   try {
-    leads = await getLeads();
+    leads = await getLeads(cookieHeader);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "API unavailable";
   }
 
   return (
-    <AdminShell>
+    <AdminShell user={user}>
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-accent">Pipeline</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Leads</h1>

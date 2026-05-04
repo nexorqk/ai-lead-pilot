@@ -1,10 +1,11 @@
-import { CreateLeadInputSchema, type CreateLeadInput } from "@leadpilot/shared";
+import { CreateLeadInputSchema, LoginInputSchema, type CreateLeadInput, type LoginInput } from "@leadpilot/shared";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
+    credentials: "include",
     headers: {
       "content-type": "application/json",
       ...init?.headers
@@ -58,16 +59,50 @@ export type DashboardSummary = {
   coldLeads: number;
 };
 
-export async function getDashboardSummary() {
-  return request<DashboardSummary>("/api/dashboard/summary");
+export type CurrentUser = {
+  id: string;
+  email: string;
+  name: string;
+  organization: {
+    id: string;
+    name: string;
+    role: string;
+  };
+};
+
+export async function login(input: LoginInput) {
+  return request<{ user: CurrentUser; expiresAt: string }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(LoginInputSchema.parse(input))
+  });
 }
 
-export async function getLeads() {
-  return request<LeadListItem[]>("/api/leads");
+export async function logout() {
+  return request<{ ok: true }>("/api/auth/logout", { method: "POST" });
 }
 
-export async function getLead(id: string) {
-  return request<LeadDetail>(`/api/leads/${id}`);
+export async function getCurrentUser(cookieHeader?: string) {
+  return request<{ user: CurrentUser }>("/api/auth/me", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getDashboardSummary(cookieHeader?: string) {
+  return request<DashboardSummary>("/api/dashboard/summary", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getLeads(cookieHeader?: string) {
+  return request<LeadListItem[]>("/api/leads", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getLead(id: string, cookieHeader?: string) {
+  return request<LeadDetail>(`/api/leads/${id}`, {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
 }
 
 export async function createLead(input: CreateLeadInput) {

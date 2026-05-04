@@ -1,8 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const passwordHash = await bcrypt.hash("demo-password-123", 12);
+
   const organization = await prisma.organization.upsert({
     where: { slug: "demo-studio" },
     update: {},
@@ -15,10 +18,11 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email: "owner@demo.leadpilot.local" },
-    update: {},
+    update: { passwordHash },
     create: {
       email: "owner@demo.leadpilot.local",
-      name: "Demo Owner"
+      name: "Demo Owner",
+      passwordHash
     }
   });
 
@@ -131,6 +135,7 @@ async function main() {
   }
 
   console.log(`Seeded ${organization.name} (${organization.id})`);
+  console.log("Demo login: owner@demo.leadpilot.local / demo-password-123");
 }
 
 main()

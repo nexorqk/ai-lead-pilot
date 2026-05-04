@@ -4,19 +4,21 @@ import { Badge } from "@/components/badge";
 import { getLead } from "@/lib/api";
 import { asArray } from "@/lib/format";
 import { AnalyzeButton } from "./analyze-button";
+import { requireCurrentUser } from "@/lib/server-auth";
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { user, cookieHeader } = await requireCurrentUser();
   const { id } = await params;
   let lead = null;
   let error: string | null = null;
   try {
-    lead = await getLead(id);
+    lead = await getLead(id, cookieHeader);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "API unavailable";
   }
 
   return (
-    <AdminShell>
+    <AdminShell user={user}>
       <Link href="/admin/leads" className="text-sm font-medium text-accent">
         Back to leads
       </Link>

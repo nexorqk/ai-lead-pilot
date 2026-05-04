@@ -1,13 +1,16 @@
 import Fastify from "fastify";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { prisma } from "@leadpilot/database";
 import { env } from "./config/env.js";
 import { createLeadAnalysisProvider } from "./ai/provider.js";
 import { LeadService } from "./services/lead-service.js";
+import { AuthService } from "./services/auth-service.js";
 import { sendError } from "./utils/errors.js";
 import { healthRoutes } from "./routes/health.js";
 import { leadRoutes } from "./routes/leads.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
+import { authRoutes } from "./routes/auth.js";
 
 const app = Fastify({
   logger: {
@@ -22,9 +25,14 @@ const aiProvider = createLeadAnalysisProvider({
   openAiModel: env.OPENAI_MODEL
 });
 const leadService = new LeadService(prisma, aiProvider);
+const authService = new AuthService(prisma, env.SESSION_TTL_DAYS);
 
 app.register(cors, {
-  origin: env.NODE_ENV === "production" ? env.WEB_ORIGIN : true
+  origin: env.NODE_ENV === "production" ? env.WEB_ORIGIN : true,
+  credentials: true
+});
+app.register(cookie, {
+  secret: env.SESSION_SECRET
 });
 
 app.setErrorHandler((error, _request, reply) => {
@@ -33,15 +41,24 @@ app.setErrorHandler((error, _request, reply) => {
 });
 
 await app.register(healthRoutes, { prisma, redisUrl: env.REDIS_URL });
+await app.register(authRoutes, {
+  authService,
+  cookieName: env.SESSION_COOKIE_NAME,
+  sessionTtlDays: env.SESSION_TTL_DAYS,
+  production: env.NODE_ENV === "production"
+});
 await app.register(leadRoutes, {
   leadService,
+  authService,
   prisma,
+  cookieName: env.SESSION_COOKIE_NAME,
   configuredDemoOrganizationId: env.DEMO_ORGANIZATION_ID
 });
 await app.register(dashboardRoutes, {
   leadService,
+  authService,
   prisma,
-  configuredDemoOrganizationId: env.DEMO_ORGANIZATION_ID
+  cookieName: env.SESSION_COOKIE_NAME
 });
 
 const shutdown = async () => {

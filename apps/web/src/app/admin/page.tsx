@@ -3,19 +3,21 @@ import { AdminShell } from "@/components/admin-shell";
 import { getDashboardSummary, getLeads, type LeadListItem, type DashboardSummary } from "@/lib/api";
 import { Badge } from "@/components/badge";
 import { Button } from "@leadpilot/ui/components/ui/button";
+import { requireCurrentUser } from "@/lib/server-auth";
 
 export default async function AdminPage() {
+  const { user, cookieHeader } = await requireCurrentUser();
   let summary: DashboardSummary | undefined;
   let leads: LeadListItem[] = [];
   let error: string | null = null;
   try {
-    [summary, leads] = await Promise.all([getDashboardSummary(), getLeads()]);
+    [summary, leads] = await Promise.all([getDashboardSummary(cookieHeader), getLeads(cookieHeader)]);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "API unavailable";
   }
 
   return (
-    <AdminShell>
+    <AdminShell user={user}>
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-wide text-accent">Admin dashboard</p>
