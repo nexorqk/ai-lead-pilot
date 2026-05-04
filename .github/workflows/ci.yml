@@ -15,6 +15,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: leadpilot
+          POSTGRES_PASSWORD: leadpilot_dev_password
+          POSTGRES_DB: leadpilot_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U leadpilot -d leadpilot_dev"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: postgresql://leadpilot:leadpilot_dev_password@localhost:5432/leadpilot_dev?schema=public
       REDIS_URL: redis://localhost:6379
@@ -42,6 +67,9 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
+
+      - name: Apply database migrations
+        run: pnpm db:migrate:deploy
 
       - name: Typecheck
         run: pnpm typecheck
