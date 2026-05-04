@@ -1,0 +1,11 @@
+- архитектуру LeadPilot AI
+- monorepo-структуру apps/web, apps/api, apps/worker
+- Next.js + TypeScript + PostgreSQL + Redis + Prisma
+- правила AI-интеграции
+- auth/roles/security
+- Docker Compose + Caddy + VPS deploy
+- backup/restore требования
+- monitoring/health endpoints
+- review guidelines для Codex
+- запреты: секреты, небезопасные миграции, fake production, слив PII
+
