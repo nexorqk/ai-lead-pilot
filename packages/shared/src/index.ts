@@ -56,6 +56,11 @@ export const LeadAnalysisQueueJobSchema = z.object({
   analysisJobId: z.string().cuid()
 });
 
+export const NotificationQueueJobSchema = z.object({
+  notificationId: z.string().cuid(),
+  organizationId: z.string().cuid()
+});
+
 export const LoginInputSchema = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(8).max(200)
@@ -76,6 +81,7 @@ export type LeadAiAnalysis = z.infer<typeof LeadAiAnalysisSchema>;
 export type UserRole = z.infer<typeof UserRoleSchema>;
 export type LeadAiAnalysisJobStatus = z.infer<typeof LeadAiAnalysisJobStatusSchema>;
 export type LeadAnalysisQueueJob = z.infer<typeof LeadAnalysisQueueJobSchema>;
+export type NotificationQueueJob = z.infer<typeof NotificationQueueJobSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;
 export type CreateLeadBookingInput = z.infer<typeof CreateLeadBookingInputSchema>;

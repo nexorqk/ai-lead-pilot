@@ -87,6 +87,38 @@ export type AvailabilityRule = {
   endTime: string;
 };
 
+export type Notification = {
+  id: string;
+  type: string;
+  channel: string;
+  recipient: string;
+  subject?: string | null;
+  body: string;
+  status: string;
+  attempts: number;
+  error?: string | null;
+  sentAt?: string | null;
+  createdAt: string;
+};
+
+export type NotificationPreference = {
+  id: string;
+  type: string;
+  channel: string;
+  recipient: string;
+  enabled: boolean;
+};
+
+export type AuditLog = {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata?: unknown;
+  createdAt: string;
+  actor?: { name: string; email: string } | null;
+};
+
 export type CurrentUser = {
   id: string;
   email: string;
@@ -135,6 +167,24 @@ export async function getBookings(cookieHeader?: string) {
 
 export async function getAvailability(cookieHeader?: string) {
   return request<AvailabilityRule[]>("/api/availability", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getNotifications(cookieHeader?: string) {
+  return request<Notification[]>("/api/notifications", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getNotificationPreferences(cookieHeader?: string) {
+  return request<NotificationPreference[]>("/api/notification-preferences", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getAuditLogs(cookieHeader?: string) {
+  return request<AuditLog[]>("/api/audit-logs", {
     headers: cookieHeader ? { cookie: cookieHeader } : undefined
   });
 }

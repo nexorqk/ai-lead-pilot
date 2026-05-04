@@ -7,13 +7,17 @@ import { env } from "./config/env.js";
 import { LeadService } from "./services/lead-service.js";
 import { AuthService } from "./services/auth-service.js";
 import { BookingService } from "./services/booking-service.js";
+import { AuditService } from "./services/audit-service.js";
+import { NotificationService } from "./services/notification-service.js";
 import { sendError } from "./utils/errors.js";
 import { healthRoutes } from "./routes/health.js";
 import { leadRoutes } from "./routes/leads.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { authRoutes } from "./routes/auth.js";
 import { bookingRoutes } from "./routes/bookings.js";
+import { notificationRoutes } from "./routes/notifications.js";
 import { createLeadAnalysisQueue } from "./queue/lead-analysis-queue.js";
+import { createNotificationQueue } from "./queue/notification-queue.js";
 
 const app = Fastify({
   logger: {
@@ -30,7 +34,10 @@ const aiProvider = createLeadAnalysisProvider({
 const leadService = new LeadService(prisma, aiProvider);
 const authService = new AuthService(prisma, env.SESSION_TTL_DAYS);
 const bookingService = new BookingService(prisma);
+const auditService = new AuditService(prisma);
 const analysisQueueResources = env.REDIS_URL ? createLeadAnalysisQueue(env.REDIS_URL) : undefined;
+const notificationQueueResources = env.REDIS_URL ? createNotificationQueue(env.REDIS_URL) : undefined;
+const notificationService = new NotificationService(prisma, notificationQueueResources?.queue);
 
 app.register(cors, {
   origin: env.NODE_ENV === "production" ? env.WEB_ORIGIN : true,
@@ -54,6 +61,8 @@ await app.register(authRoutes, {
 });
 await app.register(leadRoutes, {
   leadService,
+  notificationService,
+  auditService,
   authService,
   prisma,
   analysisQueue: analysisQueueResources?.queue,
@@ -64,12 +73,19 @@ await app.register(dashboardRoutes, {
   leadService,
   bookingService,
   authService,
-  prisma,
   cookieName: env.SESSION_COOKIE_NAME
 });
 await app.register(bookingRoutes, {
   bookingService,
+  notificationService,
+  auditService,
   authService,
+  cookieName: env.SESSION_COOKIE_NAME
+});
+await app.register(notificationRoutes, {
+  authService,
+  notificationService,
+  auditService,
   cookieName: env.SESSION_COOKIE_NAME
 });
 
@@ -78,6 +94,8 @@ const shutdown = async () => {
   await app.close();
   await analysisQueueResources?.queue.close();
   await analysisQueueResources?.connection.quit();
+  await notificationQueueResources?.queue.close();
+  await notificationQueueResources?.connection.quit();
   await prisma.$disconnect();
 };
 

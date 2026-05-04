@@ -41,6 +41,27 @@ async function main() {
     }
   });
 
+  for (const type of ["lead_created", "booking_created", "booking_status_changed"]) {
+    await prisma.notificationPreference.upsert({
+      where: {
+        organizationId_type_channel_recipient: {
+          organizationId: organization.id,
+          type,
+          channel: "mock_email",
+          recipient: user.email
+        }
+      },
+      update: { enabled: true },
+      create: {
+        organizationId: organization.id,
+        type,
+        channel: "mock_email",
+        recipient: user.email,
+        enabled: true
+      }
+    });
+  }
+
   const services = await Promise.all(
     [
       { name: "Consultation", slug: "consultation", durationMin: 45 },

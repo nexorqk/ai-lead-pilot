@@ -4,12 +4,16 @@ import type { Queue } from "bullmq";
 import type { LeadAnalysisQueueJob } from "@leadpilot/shared";
 import { LeadIdParamsSchema } from "@leadpilot/shared";
 import type { LeadService } from "../services/lead-service.js";
+import type { NotificationService } from "../services/notification-service.js";
+import type { AuditService } from "../services/audit-service.js";
 import { getDemoOrganizationId } from "../services/organization-context.js";
 import { requireRole, type AuthService } from "../services/auth-service.js";
 import { AppError } from "../utils/errors.js";
 
 type RouteOptions = {
   leadService: LeadService;
+  notificationService: NotificationService;
+  auditService: AuditService;
   authService: AuthService;
   prisma: PrismaClient;
   analysisQueue?: Queue<LeadAnalysisQueueJob>;
@@ -32,6 +36,19 @@ export const leadRoutes: FastifyPluginAsync<RouteOptions> = async (app, options)
   app.post("/api/leads", async (request, reply) => {
     const organizationId = await getDemoOrganizationId(options.prisma, options.configuredDemoOrganizationId);
     const lead = await options.leadService.createLead(organizationId, request.body);
+    await options.notificationService.notifyOrganization({
+      organizationId,
+      type: "lead_created",
+      subject: `New lead from ${lead.customer.name}`,
+      body: `${lead.customer.name} submitted a new lead. Review it in LeadPilot AI.`
+    });
+    await options.auditService.record({
+      organizationId,
+      action: "lead.created",
+      entityType: "Lead",
+      entityId: lead.id,
+      metadata: { source: "public_form", customer: lead.customer.name }
+    });
     return reply.status(201).send(lead);
   });
 
@@ -62,6 +79,14 @@ export const leadRoutes: FastifyPluginAsync<RouteOptions> = async (app, options)
       await options.prisma.leadAiAnalysisJob.update({
         where: { id: analysisJob.id },
         data: { bullmqJobId: queued.id }
+      });
+      await options.auditService.record({
+        organizationId: context.organizationId,
+        actorUserId: context.userId,
+        action: "lead.analysis_queued",
+        entityType: "Lead",
+        entityId: id,
+        metadata: { analysisJobId: analysisJob.id, bullmqJobId: queued.id }
       });
       return {
         leadId: id,

@@ -90,6 +90,9 @@ Implemented endpoints:
 - `GET /api/availability`
 - `POST /api/leads/:id/bookings`
 - `PATCH /api/bookings/:id/status`
+- `GET /api/notifications`
+- `GET /api/notification-preferences`
+- `GET /api/audit-logs`
 - `GET /api/dashboard/summary`
 
 Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
@@ -97,6 +100,8 @@ Admin APIs require a session cookie and resolve organization scope from the logg
 Lead analysis is asynchronous: the API creates a persisted analysis job and enqueues BullMQ work in Redis. The worker consumes the queue, calls the configured AI provider, stores validated analysis output, and updates the job status.
 
 Bookings can be created from leads by authenticated owner/manager/staff users. The API checks active organization availability rules and prevents overlapping requested or confirmed bookings.
+
+Notifications are queued with BullMQ and processed by the worker with a mock email provider. Notification attempts are stored in the database, and lead/booking actions write audit log entries.
 
 ## Docker
 

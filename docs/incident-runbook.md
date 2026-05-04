@@ -21,5 +21,6 @@ Escalation notes:
 - If database readiness fails, verify disk space, credentials, and migration state.
 - If Redis readiness fails, new lead analysis jobs cannot be enqueued.
 - If analysis jobs stay `pending` or `processing`, inspect worker logs and Redis connectivity.
+- If notifications stay `pending`, inspect worker logs and the `notifications` BullMQ queue.
 - If Caddy fails, verify DNS and placeholder domains.
 - Do not run restore against production without an explicit restore plan and a recent backup.

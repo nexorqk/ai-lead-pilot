@@ -6,6 +6,7 @@ Current controls:
 - Admin routes require database-backed HttpOnly cookie sessions.
 - API organization scope is resolved from `OrganizationMember` for authenticated admin requests.
 - Role checks are enforced for AI analysis actions.
+- Notification and audit list endpoints require authenticated organization membership.
 - API input and AI output are validated with Zod.
 - API errors avoid stack traces in production.
 - Admin data access is organization-scoped.
