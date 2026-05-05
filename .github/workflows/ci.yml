@@ -82,3 +82,14 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Validate production Compose
+        run: |
+          cp .env.example .env.production
+          docker compose -f docker-compose.prod.yml config
+
+      - name: Build Docker images
+        run: |
+          docker build -f infra/docker/web.Dockerfile .
+          docker build -f infra/docker/api.Dockerfile .
+          docker build -f infra/docker/worker.Dockerfile .
