@@ -15,7 +15,10 @@ import {
   type ResetPasswordInput
 } from "@leadpilot/shared";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const apiBaseUrl =
+  typeof window !== "undefined"
+    ? "" // client-side: relative paths proxy through Next.js rewrites
+    : (process.env.API_URL ?? "http://localhost:4000");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
