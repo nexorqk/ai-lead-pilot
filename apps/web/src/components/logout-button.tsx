@@ -1,16 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@leadpilot/ui/components/ui/button";
 import { logout } from "@/lib/api";
 
 export function LogoutButton() {
-  const router = useRouter();
-
   async function onLogout() {
     await logout().catch(() => undefined);
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/login";
   }
 
   return (
