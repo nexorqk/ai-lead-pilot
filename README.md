@@ -84,6 +84,9 @@ Implemented endpoints:
 
 - `GET /health`
 - `GET /ready`
+- `POST /api/auth/forgot-password`
+- `GET /api/auth/reset-password/:token`
+- `POST /api/auth/reset-password`
 - `GET /api/leads`
 - `GET /api/leads/:id`
 - `POST /api/leads`
@@ -155,7 +158,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Known Tradeoffs
 
-- Password reset, registration, real SMTP/Telegram invite delivery, and multi-organization switching are not implemented yet.
+- Registration and real SMTP/Telegram invite delivery are not implemented yet.
 - Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
 - API/database integration coverage exists for public lead intake, organization profile updates, booking conflicts, and team role protections, but it is not exhaustive.
 - Production Compose is not fully hardened or load-tested.
@@ -164,7 +167,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Roadmap
 
-1. Password reset and real SMTP/Telegram invite delivery.
+1. Real SMTP/Telegram invite delivery.
 2. Booking availability and calendar UI.
 3. Email and Telegram notifications.
 4. Automated backups and restore drill.

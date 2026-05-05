@@ -4,11 +4,15 @@ import {
   TeamMemberInputSchema,
   PasswordSetupInputSchema,
   UpdateOrganizationProfileInputSchema,
+  ForgotPasswordInputSchema,
+  ResetPasswordInputSchema,
   type CreateLeadInput,
   type LoginInput,
   type TeamMemberInput,
   type PasswordSetupInput,
-  type UpdateOrganizationProfileInput
+  type UpdateOrganizationProfileInput,
+  type ForgotPasswordInput,
+  type ResetPasswordInput
 } from "@leadpilot/shared";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -278,6 +282,30 @@ export async function completePasswordSetup(input: PasswordSetupInput) {
   return request<{ ok: true; email: string; organizationName: string }>("/api/auth/password-setup", {
     method: "POST",
     body: JSON.stringify(PasswordSetupInputSchema.parse(input))
+  });
+}
+
+export async function requestPasswordReset(input: ForgotPasswordInput) {
+  return request<{ ok: true; message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(ForgotPasswordInputSchema.parse(input))
+  });
+}
+
+export type ResetPasswordPreview = {
+  email: string;
+  name: string;
+  expiresAt: string;
+};
+
+export async function getPasswordResetPreview(token: string) {
+  return request<ResetPasswordPreview>(`/api/auth/reset-password/${encodeURIComponent(token)}`);
+}
+
+export async function completePasswordReset(input: ResetPasswordInput) {
+  return request<{ ok: true; email: string }>("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(ResetPasswordInputSchema.parse(input))
   });
 }
 

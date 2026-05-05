@@ -107,7 +107,9 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
     rateLimit: {
       max: config.AUTH_RATE_LIMIT_MAX,
       timeWindow: config.AUTH_RATE_LIMIT_WINDOW
-    }
+    },
+    notificationService,
+    webOrigin: config.WEB_ORIGIN
   });
   await app.register(leadRoutes, {
     leadService,

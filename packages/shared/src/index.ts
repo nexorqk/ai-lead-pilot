@@ -90,6 +90,10 @@ export const PasswordSetupTokenParamsSchema = z.object({
   token: z.string().trim().min(20).max(200)
 });
 
+export const ResetPasswordTokenParamsSchema = z.object({
+  token: z.string().trim().min(20).max(200)
+});
+
 export const PasswordSetupInputSchema = z.object({
   token: z.string().trim().min(20).max(200),
   password: z.string().min(8).max(200)
@@ -99,6 +103,21 @@ export const PasswordSetupPreviewSchema = z.object({
   email: z.string().trim().email().max(255),
   name: z.string().trim().min(2).max(120),
   organizationName: z.string().trim().min(1).max(120),
+  expiresAt: z.string().datetime()
+});
+
+export const ForgotPasswordInputSchema = z.object({
+  email: z.string().trim().email().max(255)
+});
+
+export const ResetPasswordInputSchema = z.object({
+  token: z.string().trim().min(20).max(200),
+  password: z.string().min(8).max(200)
+});
+
+export const ResetPasswordPreviewSchema = z.object({
+  email: z.string().trim().email().max(255),
+  name: z.string().trim().min(2).max(120),
   expiresAt: z.string().datetime()
 });
 
@@ -135,6 +154,9 @@ export type NotificationQueueJob = z.infer<typeof NotificationQueueJobSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 export type PasswordSetupInput = z.infer<typeof PasswordSetupInputSchema>;
 export type PasswordSetupPreview = z.infer<typeof PasswordSetupPreviewSchema>;
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordInputSchema>;
+export type ResetPasswordInput = z.infer<typeof ResetPasswordInputSchema>;
+export type ResetPasswordPreview = z.infer<typeof ResetPasswordPreviewSchema>;
 export type TeamMemberInput = z.infer<typeof TeamMemberInputSchema>;
 export type UpdateTeamMemberRoleInput = z.infer<typeof UpdateTeamMemberRoleInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;

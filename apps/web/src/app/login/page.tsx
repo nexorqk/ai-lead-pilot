@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@leadpilot/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@leadpilot/ui/components/ui/card";
 import { Input } from "@leadpilot/ui/components/ui/input";
@@ -49,6 +50,11 @@ export default function LoginPage() {
               <Input id="password" name="password" type="password" autoComplete="current-password" defaultValue="demo-password-123" required />
             </div>
             <Button disabled={status === "loading"}>{status === "loading" ? "Logging in..." : "Log in"}</Button>
+            <div className="text-right text-sm">
+              <Link href="/forgot-password" className="text-slate-600 underline hover:text-slate-900">
+                Forgot password?
+              </Link>
+            </div>
           </form>
           {status === "error" ? <p className="mt-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
         </CardContent>

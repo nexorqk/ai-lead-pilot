@@ -1,8 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { PrismaClient } from "@prisma/client";
-import { PasswordSetupInputSchema, PasswordSetupTokenParamsSchema } from "@leadpilot/shared";
+import { PasswordSetupInputSchema, PasswordSetupTokenParamsSchema, ForgotPasswordInputSchema, ResetPasswordInputSchema, ResetPasswordTokenParamsSchema } from "@leadpilot/shared";
 import type { AuthService } from "../services/auth-service.js";
+import type { NotificationService } from "../services/notification-service.js";
 import { completePasswordSetup, previewPasswordSetup } from "../services/password-setup-service.js";
+import { issuePasswordResetToken, previewPasswordReset, completePasswordReset } from "../services/password-reset-service.js";
 
 export const authRoutes: FastifyPluginAsync<{
   authService: AuthService;
@@ -14,6 +16,8 @@ export const authRoutes: FastifyPluginAsync<{
     max: number;
     timeWindow: string;
   };
+  notificationService: NotificationService;
+  webOrigin: string;
 }> = async (app, options) => {
   app.post(
     "/api/auth/login",
@@ -75,6 +79,64 @@ export const authRoutes: FastifyPluginAsync<{
     },
     async (request) => {
       return completePasswordSetup(options.prisma, PasswordSetupInputSchema.parse(request.body));
+    }
+  );
+
+  app.post(
+    "/api/auth/forgot-password",
+    {
+      config: {
+        rateLimit: options.rateLimit
+      }
+    },
+    async (request) => {
+      const { email } = ForgotPasswordInputSchema.parse(request.body);
+      const user = await options.prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+        include: {
+          memberships: {
+            include: { organization: true },
+            orderBy: { createdAt: "asc" },
+            take: 1
+          }
+        }
+      });
+
+      if (user?.passwordHash && user.memberships[0]) {
+        const { token, expiresAt } = await issuePasswordResetToken(options.prisma, user.id, 1);
+        const resetUrl = new URL(`/reset-password?token=${token}`, options.webOrigin).toString();
+
+        await options.notificationService.notifyRecipient({
+          organizationId: user.memberships[0].organizationId,
+          type: "password_reset_requested",
+          channel: "mock_email",
+          recipient: user.email,
+          subject: "Reset your LeadPilot AI password",
+          body: `Reset your password here: ${resetUrl}\n\nThis link expires at ${expiresAt.toISOString()}.`
+        });
+      }
+
+      return {
+        ok: true,
+        message: "If an account exists with this email, a password reset link has been sent."
+      };
+    }
+  );
+
+  app.get("/api/auth/reset-password/:token", async (request) => {
+    const { token } = ResetPasswordTokenParamsSchema.parse(request.params);
+    return previewPasswordReset(options.prisma, token);
+  });
+
+  app.post(
+    "/api/auth/reset-password",
+    {
+      config: {
+        rateLimit: options.rateLimit
+      }
+    },
+    async (request) => {
+      return completePasswordReset(options.prisma, ResetPasswordInputSchema.parse(request.body));
     }
   );
 };

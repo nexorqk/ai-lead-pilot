@@ -58,15 +58,16 @@ enum LeadAiAnalysisJobStatus {
 }
 
 model User {
-  id           String               @id @default(cuid())
-  email        String               @unique
-  name         String
-  passwordHash String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  memberships  OrganizationMember[]
-  sessions     Session[]
-  auditLogs    AuditLog[]
+  id                 String               @id @default(cuid())
+  email              String               @unique
+  name               String
+  passwordHash       String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  memberships        OrganizationMember[]
+  sessions           Session[]
+  auditLogs          AuditLog[]
+  passwordResetToken PasswordResetToken?
 }
 
 model Session {
@@ -122,6 +123,19 @@ model PasswordSetupToken {
   usedAt               DateTime?
   createdAt            DateTime           @default(now())
   organizationMember   OrganizationMember @relation(fields: [organizationMemberId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([usedAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
   @@index([usedAt])
