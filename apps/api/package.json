@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "dotenv -e ../../.env -- tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "tsc -p tsconfig.json --noEmit",
@@ -22,14 +22,15 @@
     "@leadpilot/shared": "workspace:*",
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
-    "fastify": "^5.2.1",
     "bullmq": "^5.34.7",
+    "fastify": "^5.2.1",
     "ioredis": "^5.4.2",
     "pino": "^9.6.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "dotenv-cli": "^11.0.0",
     "tsx": "^4.19.2",
     "vitest": "^2.1.8"
   }

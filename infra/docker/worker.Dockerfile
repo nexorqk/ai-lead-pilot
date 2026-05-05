@@ -20,4 +20,4 @@ RUN pnpm --filter @leadpilot/worker... build
 FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=build /app /app
-CMD ["pnpm", "--filter", "@leadpilot/worker", "start"]
+CMD ["dotenv", "-e", "../../.env.production", "--", "pnpm", "--filter", "@leadpilot/worker", "start"]

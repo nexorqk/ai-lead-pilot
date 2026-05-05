@@ -28,6 +28,8 @@ pnpm db:seed
 pnpm dev
 ```
 
+> **Note:** `pnpm dev` starts the API, web, and worker apps in parallel. Dev scripts in `apps/api` and `apps/worker` automatically load the root `.env` via `dotenv-cli`, so environment variables are available without manual export.
+
 Open:
 
 - Web: http://localhost:3000

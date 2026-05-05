@@ -21,4 +21,4 @@ FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=build /app /app
 EXPOSE 4000
-CMD ["pnpm", "--filter", "@leadpilot/api", "start"]
+CMD ["dotenv", "-e", "../../.env.production", "--", "pnpm", "--filter", "@leadpilot/api", "start"]
