@@ -142,6 +142,7 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
     authService,
     teamService,
     auditService,
+    notificationService,
     cookieName: config.SESSION_COOKIE_NAME,
     webOrigin: config.WEB_ORIGIN
   });

@@ -2,12 +2,14 @@ import type { FastifyPluginAsync } from "fastify";
 import { TeamMemberIdParamsSchema } from "@leadpilot/shared";
 import { requireRole, type AuthService } from "../services/auth-service.js";
 import type { AuditService } from "../services/audit-service.js";
+import type { NotificationService } from "../services/notification-service.js";
 import type { TeamService } from "../services/team-service.js";
 
 export const teamRoutes: FastifyPluginAsync<{
   authService: AuthService;
   teamService: TeamService;
   auditService: AuditService;
+  notificationService: NotificationService;
   cookieName: string;
   webOrigin: string;
 }> = async (app, options) => {
@@ -23,6 +25,16 @@ export const teamRoutes: FastifyPluginAsync<{
     const setupUrl = created.passwordSetupToken
       ? new URL(`/setup-account?token=${created.passwordSetupToken.token}`, options.webOrigin).toString()
       : null;
+    if (setupUrl) {
+      await options.notificationService.notifyRecipient({
+        organizationId: context.organizationId,
+        type: "team_invite_created",
+        channel: "mock_email",
+        recipient: created.member.user.email,
+        subject: `You were invited to ${context.organizationName}`,
+        body: `Create your LeadPilot AI password for ${context.organizationName}: ${setupUrl}`
+      });
+    }
     await options.auditService.record({
       organizationId: context.organizationId,
       actorUserId: context.userId,

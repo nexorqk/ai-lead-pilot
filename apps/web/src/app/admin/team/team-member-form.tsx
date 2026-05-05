@@ -31,7 +31,7 @@ export function TeamMemberForm({ canManage }: { canManage: boolean }) {
       setState("success");
       setMessage(
         member.setupUrl
-          ? `${member.user.email} was added as ${member.role}. Setup link: ${member.setupUrl}`
+          ? `${member.user.email} was added as ${member.role}. Invite notification queued.`
           : `${member.user.email} was added as ${member.role}.`
       );
       event.currentTarget.reset();

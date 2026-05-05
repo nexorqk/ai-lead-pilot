@@ -228,6 +228,18 @@ describeWithDatabase("API integration", () => {
     expect(createMember.json<{ role: string; user: { hasPassword: boolean; passwordHash?: string | null } }>().user.hasPassword).toBe(false);
     expect(createMember.json<{ role: string; user: { hasPassword: boolean; passwordHash?: string | null } }>().user.passwordHash).toBeUndefined();
 
+    const inviteNotification = await prisma.notification.findFirst({
+      where: {
+        organizationId: organization.id,
+        type: "team_invite_created",
+        recipient: "front-desk@example.com"
+      }
+    });
+    expect(inviteNotification).toBeTruthy();
+    expect(inviteNotification?.status).toBe("pending");
+    expect(inviteNotification?.body).toContain("/setup-account?token=");
+    expect(inviteNotification?.body).not.toContain("tokenHash");
+
     const members = await app.inject({
       method: "GET",
       url: "/api/team/members",
@@ -319,6 +331,17 @@ describeWithDatabase("API integration", () => {
     expect(createMember.statusCode).toBe(201);
     const created = createMember.json<{ setupUrl: string | null }>();
     expect(created.setupUrl).toContain("/setup-account?token=");
+
+    const inviteNotification = await prisma.notification.findFirst({
+      where: {
+        organizationId: organization.id,
+        type: "team_invite_created",
+        recipient: inviteeEmail
+      }
+    });
+    expect(inviteNotification).toBeTruthy();
+    expect(inviteNotification?.subject).toContain(organization.name);
+    expect(inviteNotification?.body).toContain(created.setupUrl);
 
     const token = new URL(created.setupUrl ?? "http://localhost/setup-account?token=").searchParams.get("token");
     expect(token).toBeTruthy();
