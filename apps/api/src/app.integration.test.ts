@@ -87,6 +87,13 @@ describeWithDatabase("API integration", () => {
   beforeEach(async () => {
     await prisma.auditLog.deleteMany({ where: { organization: { slug: { startsWith: "integration-org-" } } } });
     await prisma.notification.deleteMany({ where: { organization: { slug: { startsWith: "integration-org-" } } } });
+    await prisma.passwordSetupToken.deleteMany({
+      where: {
+        organizationMember: {
+          organization: { slug: { startsWith: "integration-org-" } }
+        }
+      }
+    });
   });
 
   it("protects admin lead list without a session", async () => {
@@ -282,5 +289,71 @@ describeWithDatabase("API integration", () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json().error.code).toBe("FORBIDDEN");
+  });
+
+  it("issues a password setup link and lets the invited member activate login", async () => {
+    const { organization, user } = await seedTestData();
+    const inviteeEmail = `invitee-${organization.slug}@example.com`;
+    app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);
+    await app.ready();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: user.email, password: "password-123" }
+    });
+    const cookie = login.headers["set-cookie"];
+    const headers = { cookie: Array.isArray(cookie) ? cookie.join("; ") : cookie ?? "" };
+
+    const createMember = await app.inject({
+      method: "POST",
+      url: "/api/team/members",
+      headers,
+      payload: {
+        name: "Invitee",
+        email: inviteeEmail,
+        role: "viewer"
+      }
+    });
+
+    expect(createMember.statusCode).toBe(201);
+    const created = createMember.json<{ setupUrl: string | null }>();
+    expect(created.setupUrl).toContain("/setup-account?token=");
+
+    const token = new URL(created.setupUrl ?? "http://localhost/setup-account?token=").searchParams.get("token");
+    expect(token).toBeTruthy();
+
+    const setup = await app.inject({
+      method: "POST",
+      url: "/api/auth/password-setup",
+      payload: {
+        token,
+        password: "invitee-password-123"
+      }
+    });
+
+    expect(setup.statusCode).toBe(200);
+    expect(setup.json().ok).toBe(true);
+
+    const relogin = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: {
+        email: inviteeEmail,
+        password: "invitee-password-123"
+      }
+    });
+    expect(relogin.statusCode).toBe(200);
+
+    const reuse = await app.inject({
+      method: "POST",
+      url: "/api/auth/password-setup",
+      payload: {
+        token,
+        password: "another-password-123"
+      }
+    });
+    expect(reuse.statusCode).toBe(410);
+    expect(reuse.json().error.code).toBe("PASSWORD_SETUP_TOKEN_USED");
   });
 });

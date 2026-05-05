@@ -65,7 +65,7 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
   const authService = new AuthService(prisma, config.SESSION_TTL_DAYS);
   const bookingService = new BookingService(prisma);
   const auditService = new AuditService(prisma);
-  const teamService = new TeamService(prisma);
+  const teamService = new TeamService(prisma, config.SESSION_TTL_DAYS);
   const analysisQueueResources = config.REDIS_URL ? createLeadAnalysisQueue(config.REDIS_URL) : undefined;
   const notificationQueueResources = config.REDIS_URL ? createNotificationQueue(config.REDIS_URL) : undefined;
   const notificationService = new NotificationService(prisma, notificationQueueResources?.queue);
@@ -96,6 +96,7 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
   await app.register(healthRoutes, { prisma, redisUrl: config.REDIS_URL });
   await app.register(authRoutes, {
     authService,
+    prisma,
     cookieName: config.SESSION_COOKIE_NAME,
     sessionTtlDays: config.SESSION_TTL_DAYS,
     production: config.NODE_ENV === "production",
@@ -141,7 +142,8 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
     authService,
     teamService,
     auditService,
-    cookieName: config.SESSION_COOKIE_NAME
+    cookieName: config.SESSION_COOKIE_NAME,
+    webOrigin: config.WEB_ORIGIN
   });
 
   app.addHook("onClose", async () => {

@@ -29,7 +29,11 @@ export function TeamMemberForm({ canManage }: { canManage: boolean }) {
         role
       });
       setState("success");
-      setMessage(`${member.user.email} was added as ${member.role}.`);
+      setMessage(
+        member.setupUrl
+          ? `${member.user.email} was added as ${member.role}. Setup link: ${member.setupUrl}`
+          : `${member.user.email} was added as ${member.role}.`
+      );
       event.currentTarget.reset();
       setRole("viewer");
       router.refresh();

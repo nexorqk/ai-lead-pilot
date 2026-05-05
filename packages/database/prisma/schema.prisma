@@ -82,35 +82,49 @@ model Session {
 }
 
 model Organization {
-  id            String               @id @default(cuid())
-  name          String
-  slug          String               @unique
-  timezone      String               @default("UTC")
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  members       OrganizationMember[]
-  customers     Customer[]
-  leads         Lead[]
-  services      Service[]
-  bookings      Booking[]
-  availabilityRules AvailabilityRule[]
+  id                      String                   @id @default(cuid())
+  name                    String
+  slug                    String                   @unique
+  timezone                String                   @default("UTC")
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  members                 OrganizationMember[]
+  customers               Customer[]
+  leads                   Lead[]
+  services                Service[]
+  bookings                Booking[]
+  availabilityRules       AvailabilityRule[]
   notificationPreferences NotificationPreference[]
-  notifications Notification[]
-  auditLogs     AuditLog[]
+  notifications           Notification[]
+  auditLogs               AuditLog[]
 }
 
 model OrganizationMember {
-  id             String       @id @default(cuid())
-  organizationId String
-  userId         String
-  role           UserRole     @default(viewer)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(cuid())
+  organizationId     String
+  userId             String
+  role               UserRole            @default(viewer)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passwordSetupToken PasswordSetupToken?
 
   @@unique([organizationId, userId])
   @@index([userId])
+}
+
+model PasswordSetupToken {
+  id                   String             @id @default(cuid())
+  organizationMemberId String             @unique
+  tokenHash            String             @unique
+  expiresAt            DateTime
+  usedAt               DateTime?
+  createdAt            DateTime           @default(now())
+  organizationMember   OrganizationMember @relation(fields: [organizationMemberId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([usedAt])
 }
 
 model Customer {
@@ -164,20 +178,20 @@ model AvailabilityRule {
 }
 
 model Lead {
-  id             String           @id @default(cuid())
+  id             String              @id @default(cuid())
   organizationId String
   customerId     String
   serviceId      String?
-  status         LeadStatus       @default(new)
-  quality        LeadQuality      @default(unknown)
-  source         String           @default("public_form")
+  status         LeadStatus          @default(new)
+  quality        LeadQuality         @default(unknown)
+  source         String              @default("public_form")
   preferredDate  String?
   preferredTime  String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customer       Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  service        Service?         @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer            @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service        Service?            @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   messages       LeadMessage[]
   aiAnalyses     LeadAiAnalysis[]
   aiAnalysisJobs LeadAiAnalysisJob[]

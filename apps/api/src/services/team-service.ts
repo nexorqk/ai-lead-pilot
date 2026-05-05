@@ -1,9 +1,13 @@
 import type { PrismaClient, UserRole } from "@prisma/client";
 import { TeamMemberInputSchema, UpdateTeamMemberRoleInputSchema } from "@leadpilot/shared";
 import { AppError } from "../utils/errors.js";
+import { issuePasswordSetupToken } from "./password-setup-service.js";
 
 export class TeamService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly passwordSetupTokenTtlDays: number
+  ) {}
 
   async listMembers(organizationId: string) {
     const members = await this.prisma.organizationMember.findMany({
@@ -66,7 +70,14 @@ export class TeamService {
           }
         }
       });
-      return toTeamMemberDto(member);
+
+      const setupToken =
+        member.user.passwordHash ? null : await issuePasswordSetupToken(tx, member.id, this.passwordSetupTokenTtlDays);
+
+      return {
+        member: toTeamMemberDto(member),
+        passwordSetupToken: setupToken
+      };
     });
   }
 

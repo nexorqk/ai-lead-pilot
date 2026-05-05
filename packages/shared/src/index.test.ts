@@ -6,6 +6,7 @@ import {
   LeadAnalysisQueueJobSchema,
   LoginInputSchema,
   NotificationQueueJobSchema,
+  PasswordSetupInputSchema,
   TeamMemberInputSchema
 } from "./index.js";
 
@@ -64,6 +65,7 @@ describe("shared schemas", () => {
   it("validates auth and queue payload contracts", () => {
     expect(LoginInputSchema.parse({ email: "owner@example.com", password: "password-123" }).email).toBe("owner@example.com");
     expect(TeamMemberInputSchema.parse({ name: "Desk User", email: "desk@example.com" }).role).toBe("viewer");
+    expect(PasswordSetupInputSchema.parse({ token: "a".repeat(32), password: "password-123" }).token).toHaveLength(32);
     expect(
       LeadAnalysisQueueJobSchema.safeParse({
         organizationId: "cmor4a34z0000x5xa9epccrpr",

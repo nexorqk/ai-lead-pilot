@@ -1,8 +1,12 @@
 import type { FastifyPluginAsync } from "fastify";
+import type { PrismaClient } from "@prisma/client";
+import { PasswordSetupInputSchema, PasswordSetupTokenParamsSchema } from "@leadpilot/shared";
 import type { AuthService } from "../services/auth-service.js";
+import { completePasswordSetup, previewPasswordSetup } from "../services/password-setup-service.js";
 
 export const authRoutes: FastifyPluginAsync<{
   authService: AuthService;
+  prisma: PrismaClient;
   cookieName: string;
   sessionTtlDays: number;
   production: boolean;
@@ -55,4 +59,21 @@ export const authRoutes: FastifyPluginAsync<{
       }
     };
   });
+
+  app.get("/api/auth/password-setup/:token", async (request) => {
+    const { token } = PasswordSetupTokenParamsSchema.parse(request.params);
+    return previewPasswordSetup(options.prisma, token);
+  });
+
+  app.post(
+    "/api/auth/password-setup",
+    {
+      config: {
+        rateLimit: options.rateLimit
+      }
+    },
+    async (request) => {
+      return completePasswordSetup(options.prisma, PasswordSetupInputSchema.parse(request.body));
+    }
+  );
 };

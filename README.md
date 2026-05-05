@@ -101,6 +101,8 @@ Implemented endpoints:
 - `POST /api/team/members`
 - `PATCH /api/team/members/:id/role`
 - `DELETE /api/team/members/:id`
+- `GET /api/auth/password-setup/:token`
+- `POST /api/auth/password-setup`
 - `GET /api/dashboard/summary`
 
 Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
@@ -111,7 +113,7 @@ Bookings can be created from leads by authenticated owner/manager/staff users. T
 
 Notifications are queued with BullMQ and processed by the worker with a mock email provider. Notification attempts are stored in the database, and lead/booking actions write audit log entries.
 
-Owners can add organization members, change member roles, and remove members. The API prevents exposing password hashes, blocks non-owner team management, and preserves at least one owner per organization.
+Owners can add organization members, change member roles, and remove members. New members without passwords receive a one-time setup link from the API response. The API prevents exposing password hashes, blocks non-owner team management, and preserves at least one owner per organization.
 
 The API adds request IDs, security headers, stable error bodies with `requestId`, and rate limits on public lead submission and login.
 
@@ -149,7 +151,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Known Tradeoffs
 
-- Password reset, registration, email invite delivery, and multi-organization switching are not implemented yet.
+- Password reset, registration, automatic email invite delivery, and multi-organization switching are not implemented yet.
 - Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
 - API/database integration coverage exists for public lead intake, booking conflicts, and team role protections, but it is not exhaustive.
 - Production Compose is not fully hardened or load-tested.
@@ -158,7 +160,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Roadmap
 
-1. Password reset and email invite delivery.
+1. Password reset and automatic email invite delivery.
 2. Booking availability and calendar UI.
 3. Email and Telegram notifications.
 4. Rate limiting, request IDs, richer error catalog.

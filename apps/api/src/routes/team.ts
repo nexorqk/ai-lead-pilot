@@ -9,6 +9,7 @@ export const teamRoutes: FastifyPluginAsync<{
   teamService: TeamService;
   auditService: AuditService;
   cookieName: string;
+  webOrigin: string;
 }> = async (app, options) => {
   app.get("/api/team/members", async (request) => {
     const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);
@@ -18,16 +19,23 @@ export const teamRoutes: FastifyPluginAsync<{
   app.post("/api/team/members", async (request, reply) => {
     const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);
     requireRole(context, ["owner"]);
-    const member = await options.teamService.createMember(context.organizationId, request.body);
+    const created = await options.teamService.createMember(context.organizationId, request.body);
+    const setupUrl = created.passwordSetupToken
+      ? new URL(`/setup-account?token=${created.passwordSetupToken.token}`, options.webOrigin).toString()
+      : null;
     await options.auditService.record({
       organizationId: context.organizationId,
       actorUserId: context.userId,
       action: "team.member_created",
       entityType: "OrganizationMember",
-      entityId: member.id,
-      metadata: { role: member.role, email: member.user.email }
+      entityId: created.member.id,
+      metadata: { role: created.member.role, email: created.member.user.email, setupUrl: Boolean(setupUrl) }
     });
-    return reply.status(201).send(member);
+    return reply.status(201).send({
+      ...created.member,
+      setupUrl,
+      setupExpiresAt: created.passwordSetupToken?.expiresAt.toISOString() ?? null
+    });
   });
 
   app.patch("/api/team/members/:id/role", async (request) => {

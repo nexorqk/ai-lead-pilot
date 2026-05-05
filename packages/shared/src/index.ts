@@ -66,6 +66,22 @@ export const LoginInputSchema = z.object({
   password: z.string().min(8).max(200)
 });
 
+export const PasswordSetupTokenParamsSchema = z.object({
+  token: z.string().trim().min(20).max(200)
+});
+
+export const PasswordSetupInputSchema = z.object({
+  token: z.string().trim().min(20).max(200),
+  password: z.string().min(8).max(200)
+});
+
+export const PasswordSetupPreviewSchema = z.object({
+  email: z.string().trim().email().max(255),
+  name: z.string().trim().min(2).max(120),
+  organizationName: z.string().trim().min(1).max(120),
+  expiresAt: z.string().datetime()
+});
+
 export const TeamMemberInputSchema = z.object({
   email: z.string().trim().email().max(255),
   name: z.string().trim().min(2).max(120),
@@ -97,6 +113,8 @@ export type LeadAiAnalysisJobStatus = z.infer<typeof LeadAiAnalysisJobStatusSche
 export type LeadAnalysisQueueJob = z.infer<typeof LeadAnalysisQueueJobSchema>;
 export type NotificationQueueJob = z.infer<typeof NotificationQueueJobSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
+export type PasswordSetupInput = z.infer<typeof PasswordSetupInputSchema>;
+export type PasswordSetupPreview = z.infer<typeof PasswordSetupPreviewSchema>;
 export type TeamMemberInput = z.infer<typeof TeamMemberInputSchema>;
 export type UpdateTeamMemberRoleInput = z.infer<typeof UpdateTeamMemberRoleInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;

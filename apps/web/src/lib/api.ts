@@ -2,9 +2,11 @@ import {
   CreateLeadInputSchema,
   LoginInputSchema,
   TeamMemberInputSchema,
+  PasswordSetupInputSchema,
   type CreateLeadInput,
   type LoginInput,
-  type TeamMemberInput
+  type TeamMemberInput,
+  type PasswordSetupInput
 } from "@leadpilot/shared";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -130,6 +132,7 @@ export type TeamMember = {
   id: string;
   role: string;
   createdAt: string;
+  updatedAt?: string;
   user: {
     id: string;
     email: string;
@@ -137,6 +140,15 @@ export type TeamMember = {
     hasPassword: boolean;
     createdAt: string;
   };
+  setupUrl?: string | null;
+  setupExpiresAt?: string | null;
+};
+
+export type PasswordSetupPreview = {
+  email: string;
+  name: string;
+  organizationName: string;
+  expiresAt: string;
 };
 
 export type CurrentUser = {
@@ -219,6 +231,17 @@ export async function createTeamMember(input: TeamMemberInput) {
   return request<TeamMember>("/api/team/members", {
     method: "POST",
     body: JSON.stringify(TeamMemberInputSchema.parse(input))
+  });
+}
+
+export async function getPasswordSetupPreview(token: string) {
+  return request<PasswordSetupPreview>(`/api/auth/password-setup/${encodeURIComponent(token)}`);
+}
+
+export async function completePasswordSetup(input: PasswordSetupInput) {
+  return request<{ ok: true; email: string; organizationName: string }>("/api/auth/password-setup", {
+    method: "POST",
+    body: JSON.stringify(PasswordSetupInputSchema.parse(input))
   });
 }
 

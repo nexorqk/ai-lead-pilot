@@ -15,6 +15,7 @@ Current controls:
 - API errors avoid stack traces in production.
 - Admin data access is organization-scoped.
 - Team APIs return `hasPassword` only and never expose password hashes.
+- Password setup links use hashed one-time tokens, expire, and are marked used after a password is created.
 - Production Compose does not publish PostgreSQL or Redis ports.
 - OpenAI provider only runs when selected and configured with an API key.
 - AI prompts avoid sending secrets and only include the lead fields needed for analysis.
@@ -22,7 +23,7 @@ Current controls:
 Temporary shortcut:
 
 - Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
-- Registration, password reset, email invite delivery, account lockout, and MFA are not implemented.
+- Registration, password reset, automatic email invite delivery, account lockout, and MFA are not implemented.
 
 Do not add:
 
