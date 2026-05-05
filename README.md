@@ -1,20 +1,20 @@
 # LeadPilot AI
 
-LeadPilot AI is a production-style foundation for an AI-assisted lead intake, booking, and CRM platform for small service businesses.
+LeadPilot AI is a full-stack app for AI-assisted lead intake, booking, and customer follow-up for small service businesses.
 
-The first vertical slice includes a public lead form, Fastify API, Prisma/PostgreSQL data model, deterministic AI lead analysis, admin dashboard, worker queue skeleton, Docker development services, production Compose draft, Caddy config, and backup/restore scripts.
+It captures public service requests, qualifies leads with an AI analysis provider, supports owner/admin workflows, manages bookings, sends operational notifications, and provides the infrastructure needed to run the app with PostgreSQL, Redis, Docker Compose, and Caddy.
 
-## Stack
+## Technology
 
-- pnpm workspaces
-- TypeScript
-- Next.js App Router and Tailwind CSS
-- Fastify API
-- PostgreSQL, Prisma
-- Redis, BullMQ
-- Zod validation
-- Mock AI provider by default, optional OpenAI provider behind environment flags
-- Docker Compose and Caddy
+- Monorepo: pnpm workspaces.
+- Language: TypeScript.
+- Web app: Next.js App Router, Tailwind CSS, shadcn/ui components.
+- API: Fastify with cookie-based sessions, role checks, rate limits, request IDs, and structured error responses.
+- Database: PostgreSQL with Prisma schema, migrations, and seed data.
+- Background jobs: Redis and BullMQ for lead analysis and notification delivery.
+- AI: pluggable lead-analysis provider with deterministic local mode and optional OpenAI integration.
+- Validation: Zod schemas shared across apps and packages.
+- Infrastructure: Docker Compose for local and VPS deployment, Caddy reverse proxy, backup and restore scripts.
 
 ## Local Setup
 
@@ -67,7 +67,7 @@ pnpm db:migrate:deploy
 pnpm db:seed
 ```
 
-Seed creates a demo owner account:
+Seed creates a local owner account:
 
 ```txt
 owner@demo.leadpilot.local
@@ -76,7 +76,7 @@ demo-password-123
 
 `pnpm db:migrate:dev` requires the development Postgres container or another reachable PostgreSQL database.
 
-The current test suite includes contract coverage for shared Zod schemas and deterministic mock AI analysis behavior. Additional API/database integration tests are still planned.
+The test suite includes shared contract coverage, deterministic mock AI coverage, and database-backed API integration coverage for lead intake, booking conflicts, team roles, password setup, and invite notifications.
 
 ## API Slice
 
@@ -125,7 +125,7 @@ Development services:
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-Production draft:
+Deployment:
 
 ```bash
 cp .env.example .env.production
@@ -133,7 +133,7 @@ cp .env.example .env.production
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Production Compose is a deploy starting point. Replace placeholder Caddy domains before using it on a VPS.
+Replace placeholder Caddy domains before using the production Compose file on a VPS.
 
 ## Backups
 
