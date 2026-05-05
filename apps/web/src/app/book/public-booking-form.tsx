@@ -30,9 +30,10 @@ export function PublicBookingForm({ organization }: { organization?: PublicOrgan
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setStatus("loading");
     setMessage("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const input = {
       customer: {
         name: String(form.get("name") ?? ""),
@@ -49,7 +50,7 @@ export function PublicBookingForm({ organization }: { organization?: PublicOrgan
       const lead = organization ? await createPublicOrganizationLead(organization.slug, input) : await createLead(input);
       setStatus("success");
       setMessage(`Request received. Lead ${lead.id} is now in the dashboard.`);
-      event.currentTarget.reset();
+      formElement.reset();
       setServiceSlug(defaultService);
     } catch (error) {
       setStatus("error");

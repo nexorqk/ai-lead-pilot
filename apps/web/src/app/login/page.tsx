@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@leadpilot/ui/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@leadpilot/ui/components/ui/card";
@@ -10,7 +9,6 @@ import { Label } from "@leadpilot/ui/components/ui/label";
 import { login } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -24,8 +22,7 @@ export default function LoginPage() {
         email: String(form.get("email") ?? ""),
         password: String(form.get("password") ?? "")
       });
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     } catch (caught) {
       setStatus("error");
       setError(caught instanceof Error ? caught.message : "Login failed");
