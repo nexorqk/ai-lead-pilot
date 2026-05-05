@@ -12,6 +12,7 @@ import { BookingService } from "./services/booking-service.js";
 import { AuditService } from "./services/audit-service.js";
 import { NotificationService } from "./services/notification-service.js";
 import { TeamService } from "./services/team-service.js";
+import { OrganizationService } from "./services/organization-service.js";
 import { sendError } from "./utils/errors.js";
 import { healthRoutes } from "./routes/health.js";
 import { leadRoutes } from "./routes/leads.js";
@@ -21,6 +22,7 @@ import { bookingRoutes } from "./routes/bookings.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { teamRoutes } from "./routes/team.js";
 import { publicRoutes } from "./routes/public.js";
+import { organizationRoutes } from "./routes/organization.js";
 import { createLeadAnalysisQueue } from "./queue/lead-analysis-queue.js";
 import { createNotificationQueue } from "./queue/notification-queue.js";
 
@@ -67,6 +69,7 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
   const bookingService = new BookingService(prisma);
   const auditService = new AuditService(prisma);
   const teamService = new TeamService(prisma, config.SESSION_TTL_DAYS);
+  const organizationService = new OrganizationService(prisma);
   const analysisQueueResources = config.REDIS_URL ? createLeadAnalysisQueue(config.REDIS_URL) : undefined;
   const notificationQueueResources = config.REDIS_URL ? createNotificationQueue(config.REDIS_URL) : undefined;
   const notificationService = new NotificationService(prisma, notificationQueueResources?.queue);
@@ -156,6 +159,12 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
     notificationService,
     cookieName: config.SESSION_COOKIE_NAME,
     webOrigin: config.WEB_ORIGIN
+  });
+  await app.register(organizationRoutes, {
+    authService,
+    organizationService,
+    auditService,
+    cookieName: config.SESSION_COOKIE_NAME
   });
 
   app.addHook("onClose", async () => {

@@ -76,7 +76,7 @@ demo-password-123
 
 `pnpm db:migrate:dev` requires the development Postgres container or another reachable PostgreSQL database.
 
-The test suite includes shared contract coverage, deterministic mock AI coverage, and database-backed API integration coverage for lead intake, booking conflicts, team roles, password setup, and invite notifications.
+The test suite includes shared contract coverage, deterministic mock AI coverage, and database-backed API integration coverage for lead intake, public organization pages, booking conflicts, team roles, password setup, and invite notifications.
 
 ## API Slice
 
@@ -101,6 +101,8 @@ Implemented endpoints:
 - `POST /api/team/members`
 - `PATCH /api/team/members/:id/role`
 - `DELETE /api/team/members/:id`
+- `GET /api/organization/profile`
+- `PATCH /api/organization/profile`
 - `GET /api/auth/password-setup/:token`
 - `POST /api/auth/password-setup`
 - `GET /api/public/organizations/:slug`
@@ -115,7 +117,7 @@ Bookings can be created from leads by authenticated owner/manager/staff users. T
 
 Notifications are queued with BullMQ and processed by the worker with a mock email provider. Notification attempts are stored in the database, and lead/booking actions write audit log entries.
 
-Owners can add organization members, change member roles, and remove members. New members without passwords receive a one-time setup link through the notification pipeline, with the link also returned by the API for local/mock delivery. The API prevents exposing password hashes, blocks non-owner team management, and preserves at least one owner per organization.
+Owners can add organization members, change member roles, remove members, and maintain the public organization profile used by `/:organizationSlug/book`. New members without passwords receive a one-time setup link through the notification pipeline, with the link also returned by the API for local/mock delivery. The API prevents exposing password hashes, blocks non-owner team management, and preserves at least one owner per organization.
 
 The API adds request IDs, security headers, stable error bodies with `requestId`, and rate limits on public lead submission and login.
 
@@ -155,7 +157,7 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 - Password reset, registration, real SMTP/Telegram invite delivery, and multi-organization switching are not implemented yet.
 - Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
-- API/database integration coverage exists for public lead intake, booking conflicts, and team role protections, but it is not exhaustive.
+- API/database integration coverage exists for public lead intake, organization profile updates, booking conflicts, and team role protections, but it is not exhaustive.
 - Production Compose is not fully hardened or load-tested.
 - Booking models and overlap prevention exist, but full calendar availability UI is future work.
 - The mock AI provider is deterministic for local development; OpenAI output is schema-validated when enabled.
@@ -165,6 +167,6 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 1. Password reset and real SMTP/Telegram invite delivery.
 2. Booking availability and calendar UI.
 3. Email and Telegram notifications.
-4. Organization profile settings for public intake pages.
-5. Automated backups and restore drill.
-6. Monitoring with uptime checks and container health visibility.
+4. Automated backups and restore drill.
+5. Monitoring with uptime checks and container health visibility.
+6. Booking availability and calendar UI polish.

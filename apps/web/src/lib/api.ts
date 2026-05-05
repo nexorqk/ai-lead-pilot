@@ -3,10 +3,12 @@ import {
   LoginInputSchema,
   TeamMemberInputSchema,
   PasswordSetupInputSchema,
+  UpdateOrganizationProfileInputSchema,
   type CreateLeadInput,
   type LoginInput,
   type TeamMemberInput,
-  type PasswordSetupInput
+  type PasswordSetupInput,
+  type UpdateOrganizationProfileInput
 } from "@leadpilot/shared";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -177,6 +179,12 @@ export type PublicOrganization = {
   }>;
 };
 
+export type OrganizationProfile = Omit<PublicOrganization, "services"> & {
+  createdAt: string;
+  updatedAt: string;
+  services: Array<PublicOrganization["services"][number] & { active: boolean }>;
+};
+
 export async function login(input: LoginInput) {
   return request<{ user: CurrentUser; expiresAt: string }>("/api/auth/login", {
     method: "POST",
@@ -239,6 +247,19 @@ export async function getAuditLogs(cookieHeader?: string) {
 export async function getTeamMembers(cookieHeader?: string) {
   return request<TeamMember[]>("/api/team/members", {
     headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getOrganizationProfile(cookieHeader?: string) {
+  return request<OrganizationProfile>("/api/organization/profile", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function updateOrganizationProfile(input: UpdateOrganizationProfileInput) {
+  return request<OrganizationProfile>("/api/organization/profile", {
+    method: "PATCH",
+    body: JSON.stringify(UpdateOrganizationProfileInputSchema.parse(input))
   });
 }
 

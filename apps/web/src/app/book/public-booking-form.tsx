@@ -21,8 +21,9 @@ const fallbackServices: ServiceOption[] = [
 ];
 
 export function PublicBookingForm({ organization }: { organization?: PublicOrganization }) {
-  const services = organization?.services.length ? organization.services : fallbackServices;
-  const defaultService = services[0]?.slug ?? "consultation";
+  const services = organization ? organization.services : fallbackServices;
+  const defaultService = services[0]?.slug ?? "";
+  const hasServices = services.length > 0;
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [serviceSlug, setServiceSlug] = useState(defaultService);
@@ -84,7 +85,7 @@ export function PublicBookingForm({ organization }: { organization?: PublicOrgan
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="serviceSlug">Service</Label>
-                  <Select name="serviceSlug" value={serviceSlug} onValueChange={setServiceSlug}>
+                  <Select name="serviceSlug" value={serviceSlug} onValueChange={setServiceSlug} disabled={!hasServices}>
                     <SelectTrigger id="serviceSlug">
                       <SelectValue placeholder="Select a service" />
                     </SelectTrigger>
@@ -110,7 +111,8 @@ export function PublicBookingForm({ organization }: { organization?: PublicOrgan
                 <Label htmlFor="message">Message</Label>
                 <Textarea id="message" name="message" required minLength={10} rows={5} />
               </div>
-              <Button disabled={status === "loading"} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {!hasServices ? <p className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">This business has no active services yet.</p> : null}
+              <Button disabled={status === "loading" || !hasServices} className="bg-accent text-accent-foreground hover:bg-accent/90">
                 {status === "loading" ? "Submitting..." : "Submit request"}
               </Button>
             </form>

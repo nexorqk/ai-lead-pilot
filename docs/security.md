@@ -7,6 +7,7 @@ Current controls:
 - API organization scope is resolved from `OrganizationMember` for authenticated admin requests.
 - Role checks are enforced for AI analysis actions.
 - Team management is owner-only and preserves at least one owner per organization.
+- Organization profile settings are owner-only and validated before public slug/service updates.
 - Notification and audit list endpoints require authenticated organization membership.
 - API responses include request IDs for support/debugging.
 - Security headers are applied with Fastify Helmet.

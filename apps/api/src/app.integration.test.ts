@@ -67,7 +67,12 @@ async function seedTestData() {
     }
   });
 
-  return { organization, user, service: organization.services[0] };
+  const service = organization.services[0];
+  if (!service) {
+    throw new Error("Expected seed service to be created");
+  }
+
+  return { organization, user, service };
 }
 
 const describeWithDatabase = process.env.DATABASE_URL ? describe : describe.skip;
@@ -192,6 +197,86 @@ describeWithDatabase("API integration", () => {
       url: "/api/public/organizations/not-a-real-org"
     });
     expect(missing.statusCode).toBe(404);
+  });
+
+  it("lets owners update the public organization profile", async () => {
+    const { organization, user, service } = await seedTestData();
+    const competing = await seedTestData();
+    app = await buildApp(config, prisma);
+    await app.ready();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: user.email, password: "password-123" }
+    });
+    const cookie = login.headers["set-cookie"];
+    const headers = { cookie: Array.isArray(cookie) ? cookie.join("; ") : cookie ?? "" };
+
+    const profile = await app.inject({
+      method: "GET",
+      url: "/api/organization/profile",
+      headers
+    });
+    expect(profile.statusCode).toBe(200);
+    expect(profile.json<{ slug: string; services: Array<{ active: boolean }> }>().slug).toBe(organization.slug);
+    expect(profile.json<{ slug: string; services: Array<{ active: boolean }> }>().services[0]?.active).toBe(true);
+
+    const update = await app.inject({
+      method: "PATCH",
+      url: "/api/organization/profile",
+      headers,
+      payload: {
+        name: "Updated Integration Org",
+        slug: `${organization.slug}-updated`,
+        timezone: "Europe/Minsk",
+        services: [
+          {
+            id: service.id,
+            name: "Priority Consultation",
+            slug: "priority-consultation",
+            description: "A short public description.",
+            durationMin: 45,
+            active: true
+          }
+        ]
+      }
+    });
+    expect(update.statusCode).toBe(200);
+    expect(update.json<{ slug: string; services: Array<{ slug: string; description: string | null }> }>().slug).toBe(`${organization.slug}-updated`);
+    expect(update.json<{ slug: string; services: Array<{ slug: string; description: string | null }> }>().services[0]?.slug).toBe("priority-consultation");
+
+    const publicProfile = await app.inject({
+      method: "GET",
+      url: `/api/public/organizations/${organization.slug}-updated`
+    });
+    expect(publicProfile.statusCode).toBe(200);
+    expect(publicProfile.json<{ services: Array<{ slug: string }> }>().services[0]?.slug).toBe("priority-consultation");
+
+    const duplicateSlug = await app.inject({
+      method: "PATCH",
+      url: "/api/organization/profile",
+      headers,
+      payload: {
+        name: "Updated Integration Org",
+        slug: competing.organization.slug,
+        timezone: "UTC",
+        services: [
+          {
+            id: service.id,
+            name: "Priority Consultation",
+            slug: "priority-consultation",
+            durationMin: 45,
+            active: true
+          }
+        ]
+      }
+    });
+    expect(duplicateSlug.statusCode).toBe(409);
+    expect(duplicateSlug.json().error.code).toBe("ORGANIZATION_SLUG_TAKEN");
+
+    const audit = await prisma.auditLog.findMany({ where: { organizationId: organization.id, action: "organization.profile_updated" } });
+    expect(audit).toHaveLength(1);
   });
 
   it("prevents overlapping bookings for the same organization", async () => {

@@ -8,7 +8,8 @@ import {
   NotificationQueueJobSchema,
   OrganizationSlugParamsSchema,
   PasswordSetupInputSchema,
-  TeamMemberInputSchema
+  TeamMemberInputSchema,
+  UpdateOrganizationProfileInputSchema
 } from "./index.js";
 
 describe("shared schemas", () => {
@@ -81,5 +82,25 @@ describe("shared schemas", () => {
         organizationId: "cmor4a34z0000x5xa9epccrpr"
       }).success
     ).toBe(true);
+  });
+
+  it("validates organization profile settings", () => {
+    const parsed = UpdateOrganizationProfileInputSchema.parse({
+      name: "Demo Studio",
+      slug: "demo-studio",
+      timezone: "Europe/Minsk",
+      services: [
+        {
+          name: "Consultation",
+          slug: "consultation",
+          description: "Initial consultation.",
+          durationMin: "60",
+          active: true
+        }
+      ]
+    });
+
+    expect(parsed.services[0]?.durationMin).toBe(60);
+    expect(UpdateOrganizationProfileInputSchema.safeParse({ ...parsed, slug: "Bad Slug" }).success).toBe(false);
   });
 });

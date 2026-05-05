@@ -51,6 +51,22 @@ export const OrganizationSlugParamsSchema = z.object({
   slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 });
 
+export const PublicServiceInputSchema = z.object({
+  id: z.string().cuid().optional(),
+  name: z.string().trim().min(2).max(120),
+  slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  description: z.string().trim().max(500).optional().or(z.literal("")),
+  durationMin: z.coerce.number().int().min(15).max(480),
+  active: z.coerce.boolean().default(true)
+});
+
+export const UpdateOrganizationProfileInputSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  timezone: z.string().trim().min(2).max(80),
+  services: z.array(PublicServiceInputSchema).min(1).max(12)
+});
+
 export const UserRoleSchema = z.enum(["owner", "manager", "staff", "viewer"]);
 export const LeadAiAnalysisJobStatusSchema = z.enum(["pending", "processing", "completed", "failed"]);
 
@@ -123,6 +139,8 @@ export type TeamMemberInput = z.infer<typeof TeamMemberInputSchema>;
 export type UpdateTeamMemberRoleInput = z.infer<typeof UpdateTeamMemberRoleInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;
 export type CreateLeadBookingInput = z.infer<typeof CreateLeadBookingInputSchema>;
+export type PublicServiceInput = z.infer<typeof PublicServiceInputSchema>;
+export type UpdateOrganizationProfileInput = z.infer<typeof UpdateOrganizationProfileInputSchema>;
 
 export type ApiError = {
   error: {

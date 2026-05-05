@@ -34,6 +34,9 @@ export function AdminShell({ children, user }: { children: ReactNode; user: Curr
             <Link href="/admin/team">Team</Link>
           </Button>
           <Button asChild variant="ghost" className="justify-start text-slate-700">
+            <Link href="/admin/settings">Settings</Link>
+          </Button>
+          <Button asChild variant="ghost" className="justify-start text-slate-700">
             <Link href={`/${user.organization.slug}/book`}>Public form</Link>
           </Button>
         </nav>

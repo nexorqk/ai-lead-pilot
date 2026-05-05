@@ -21,6 +21,8 @@ The lead intake flow is:
 
 Organization scoping is enforced in lead queries. Admin requests authenticate with an HttpOnly session cookie and resolve scope from `OrganizationMember`. Public lead intake resolves the target organization by slug.
 
+Organization profile settings are owner-only. The API lets owners update the public business name, slug, timezone, and active service descriptions used by `/:organizationSlug/book`; changes are audited and the public page immediately resolves through the new slug.
+
 Team management is organization-scoped. Owners can add members, change roles, and remove members; non-owners are blocked from member administration and the service prevents removing or downgrading the final owner. New members without passwords receive a one-time password setup token, stored only as a hash, and activate their login through `/setup-account`. Invite messages are created as notifications and delivered by the same BullMQ worker path as other outbound notifications.
 
 Bookings are organization-scoped and can be created from leads. The booking service validates active availability rules and rejects overlaps with requested or confirmed bookings before writing the booking.
