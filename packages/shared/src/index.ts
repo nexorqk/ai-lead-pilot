@@ -66,6 +66,20 @@ export const LoginInputSchema = z.object({
   password: z.string().min(8).max(200)
 });
 
+export const TeamMemberInputSchema = z.object({
+  email: z.string().trim().email().max(255),
+  name: z.string().trim().min(2).max(120),
+  role: UserRoleSchema.default("viewer")
+});
+
+export const TeamMemberIdParamsSchema = z.object({
+  id: z.string().cuid()
+});
+
+export const UpdateTeamMemberRoleInputSchema = z.object({
+  role: UserRoleSchema
+});
+
 export const BookingStatusSchema = z.enum(["requested", "confirmed", "cancelled", "completed"]);
 
 export const CreateLeadBookingInputSchema = z.object({
@@ -83,6 +97,8 @@ export type LeadAiAnalysisJobStatus = z.infer<typeof LeadAiAnalysisJobStatusSche
 export type LeadAnalysisQueueJob = z.infer<typeof LeadAnalysisQueueJobSchema>;
 export type NotificationQueueJob = z.infer<typeof NotificationQueueJobSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
+export type TeamMemberInput = z.infer<typeof TeamMemberInputSchema>;
+export type UpdateTeamMemberRoleInput = z.infer<typeof UpdateTeamMemberRoleInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;
 export type CreateLeadBookingInput = z.infer<typeof CreateLeadBookingInputSchema>;
 

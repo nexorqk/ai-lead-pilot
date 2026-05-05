@@ -20,6 +20,8 @@ The first vertical slice is:
 
 Organization scoping is enforced in lead queries. Admin requests authenticate with an HttpOnly session cookie and resolve scope from `OrganizationMember`. Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
 
+Team management is organization-scoped. Owners can add members, change roles, and remove members; non-owners are blocked from member administration and the service prevents removing or downgrading the final owner.
+
 Bookings are organization-scoped and can be created from leads. The booking service validates active availability rules and rejects overlaps with requested or confirmed bookings before writing the booking.
 
 Notifications use the same Redis/BullMQ worker process. API events create `Notification` rows and enqueue delivery jobs. The worker currently uses a mock email provider, records send attempts, and marks notifications sent or failed. Audit logs are written for lead creation, analysis queueing, booking creation, and booking status changes.

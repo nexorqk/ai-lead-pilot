@@ -191,4 +191,96 @@ describeWithDatabase("API integration", () => {
     expect(overlap.statusCode).toBe(409);
     expect(overlap.json().error.code).toBe("BOOKING_CONFLICT");
   });
+
+  it("lets owners add team members and blocks duplicate memberships", async () => {
+    const { organization, user } = await seedTestData();
+    app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);
+    await app.ready();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: user.email, password: "password-123" }
+    });
+    const cookie = login.headers["set-cookie"];
+    const headers = { cookie: Array.isArray(cookie) ? cookie.join("; ") : cookie ?? "" };
+
+    const createMember = await app.inject({
+      method: "POST",
+      url: "/api/team/members",
+      headers,
+      payload: {
+        name: "Front Desk",
+        email: "front-desk@example.com",
+        role: "staff"
+      }
+    });
+
+    expect(createMember.statusCode).toBe(201);
+    expect(createMember.json<{ role: string; user: { hasPassword: boolean; passwordHash?: string | null } }>().role).toBe("staff");
+    expect(createMember.json<{ role: string; user: { hasPassword: boolean; passwordHash?: string | null } }>().user.hasPassword).toBe(false);
+    expect(createMember.json<{ role: string; user: { hasPassword: boolean; passwordHash?: string | null } }>().user.passwordHash).toBeUndefined();
+
+    const members = await app.inject({
+      method: "GET",
+      url: "/api/team/members",
+      headers
+    });
+    expect(members.statusCode).toBe(200);
+    expect(members.json<Array<{ user: { email: string } }>>().some((member) => member.user.email === "front-desk@example.com")).toBe(true);
+
+    const duplicate = await app.inject({
+      method: "POST",
+      url: "/api/team/members",
+      headers,
+      payload: {
+        name: "Front Desk",
+        email: "front-desk@example.com",
+        role: "viewer"
+      }
+    });
+    expect(duplicate.statusCode).toBe(409);
+    expect(duplicate.json().error.code).toBe("TEAM_MEMBER_EXISTS");
+  });
+
+  it("prevents non-owners from managing team members", async () => {
+    const { organization } = await seedTestData();
+    const viewer = await prisma.user.create({
+      data: {
+        email: `viewer-${organization.slug}@example.com`,
+        name: "Integration Viewer",
+        passwordHash: await bcrypt.hash("password-123", 4),
+        memberships: {
+          create: {
+            organizationId: organization.id,
+            role: "viewer"
+          }
+        }
+      }
+    });
+    app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);
+    await app.ready();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: viewer.email, password: "password-123" }
+    });
+    const cookie = login.headers["set-cookie"];
+    const headers = { cookie: Array.isArray(cookie) ? cookie.join("; ") : cookie ?? "" };
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/team/members",
+      headers,
+      payload: {
+        name: "Unauthorized Staff",
+        email: "unauthorized-staff@example.com",
+        role: "staff"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("FORBIDDEN");
+  });
 });

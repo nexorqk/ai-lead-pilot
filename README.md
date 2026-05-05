@@ -97,6 +97,10 @@ Implemented endpoints:
 - `GET /api/notifications`
 - `GET /api/notification-preferences`
 - `GET /api/audit-logs`
+- `GET /api/team/members`
+- `POST /api/team/members`
+- `PATCH /api/team/members/:id/role`
+- `DELETE /api/team/members/:id`
 - `GET /api/dashboard/summary`
 
 Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
@@ -106,6 +110,8 @@ Lead analysis is asynchronous: the API creates a persisted analysis job and enqu
 Bookings can be created from leads by authenticated owner/manager/staff users. The API checks active organization availability rules and prevents overlapping requested or confirmed bookings.
 
 Notifications are queued with BullMQ and processed by the worker with a mock email provider. Notification attempts are stored in the database, and lead/booking actions write audit log entries.
+
+Owners can add organization members, change member roles, and remove members. The API prevents exposing password hashes, blocks non-owner team management, and preserves at least one owner per organization.
 
 The API adds request IDs, security headers, stable error bodies with `requestId`, and rate limits on public lead submission and login.
 
@@ -143,16 +149,16 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 
 ## Known Tradeoffs
 
-- Password reset, registration, invite flows, and multi-organization switching are not implemented yet.
+- Password reset, registration, email invite delivery, and multi-organization switching are not implemented yet.
 - Lead analysis is queued with BullMQ, but queue monitoring and a dedicated job retry dashboard are not implemented yet.
-- API/database integration test coverage is still limited; current tests focus on shared contracts and AI provider behavior.
+- API/database integration coverage exists for public lead intake, booking conflicts, and team role protections, but it is not exhaustive.
 - Production Compose is not fully hardened or load-tested.
-- Booking models exist, but full calendar availability and conflict prevention are future work.
+- Booking models and overlap prevention exist, but full calendar availability UI is future work.
 - The mock AI provider is deterministic for local development; OpenAI output is schema-validated when enabled.
 
 ## Roadmap
 
-1. Auth and organization roles.
+1. Password reset and email invite delivery.
 2. Booking availability and calendar UI.
 3. Email and Telegram notifications.
 4. Rate limiting, request IDs, richer error catalog.

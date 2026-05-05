@@ -1,4 +1,11 @@
-import { CreateLeadInputSchema, LoginInputSchema, type CreateLeadInput, type LoginInput } from "@leadpilot/shared";
+import {
+  CreateLeadInputSchema,
+  LoginInputSchema,
+  TeamMemberInputSchema,
+  type CreateLeadInput,
+  type LoginInput,
+  type TeamMemberInput
+} from "@leadpilot/shared";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -119,6 +126,19 @@ export type AuditLog = {
   actor?: { name: string; email: string } | null;
 };
 
+export type TeamMember = {
+  id: string;
+  role: string;
+  createdAt: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    hasPassword: boolean;
+    createdAt: string;
+  };
+};
+
 export type CurrentUser = {
   id: string;
   email: string;
@@ -186,6 +206,19 @@ export async function getNotificationPreferences(cookieHeader?: string) {
 export async function getAuditLogs(cookieHeader?: string) {
   return request<AuditLog[]>("/api/audit-logs", {
     headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function getTeamMembers(cookieHeader?: string) {
+  return request<TeamMember[]>("/api/team/members", {
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function createTeamMember(input: TeamMemberInput) {
+  return request<TeamMember>("/api/team/members", {
+    method: "POST",
+    body: JSON.stringify(TeamMemberInputSchema.parse(input))
   });
 }
 
