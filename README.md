@@ -32,7 +32,7 @@ Open:
 
 - Web: http://localhost:3000
 - API health: http://localhost:4000/health
-- Public intake: http://localhost:3000/book
+- Public intake: http://localhost:3000/demo-studio/book
 - Admin dashboard: http://localhost:3000/admin
 
 ## Environment
@@ -43,7 +43,7 @@ Important variables:
 
 - `DATABASE_URL`: PostgreSQL connection string.
 - `REDIS_URL`: Redis connection string.
-- `DEMO_ORGANIZATION_ID`: public intake organization context until public business pages support organization slugs.
+- `DEMO_ORGANIZATION_ID`: fallback organization context for the legacy `/book` intake page.
 - `SESSION_SECRET`: at least 32 random characters for signing session cookies.
 - `SESSION_COOKIE_NAME`: defaults to `leadpilot_session`.
 - `SESSION_TTL_DAYS`: session lifetime in days.
@@ -103,9 +103,11 @@ Implemented endpoints:
 - `DELETE /api/team/members/:id`
 - `GET /api/auth/password-setup/:token`
 - `POST /api/auth/password-setup`
+- `GET /api/public/organizations/:slug`
+- `POST /api/public/organizations/:slug/leads`
 - `GET /api/dashboard/summary`
 
-Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation still uses the configured demo/public organization until public pages support organization slugs.
+Admin APIs require a session cookie and resolve organization scope from the logged-in user's organization membership. Public lead creation supports organization-specific intake pages at `/:organizationSlug/book`; the legacy `/book` route remains as a local fallback.
 
 Lead analysis is asynchronous: the API creates a persisted analysis job and enqueues BullMQ work in Redis. The worker consumes the queue, calls the configured AI provider, stores validated analysis output, and updates the job status.
 
@@ -163,6 +165,6 @@ CONFIRM_RESTORE=I_UNDERSTAND_THIS_OVERWRITES_DATA DATABASE_URL=postgresql://... 
 1. Password reset and real SMTP/Telegram invite delivery.
 2. Booking availability and calendar UI.
 3. Email and Telegram notifications.
-4. Rate limiting, request IDs, richer error catalog.
+4. Organization profile settings for public intake pages.
 5. Automated backups and restore drill.
 6. Monitoring with uptime checks and container health visibility.

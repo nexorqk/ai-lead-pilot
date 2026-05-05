@@ -54,6 +54,7 @@ export const authRoutes: FastifyPluginAsync<{
         organization: {
           id: context.organizationId,
           name: context.organizationName,
+          slug: context.organizationSlug,
           role: context.role
         }
       }

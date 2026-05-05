@@ -47,6 +47,10 @@ export const LeadIdParamsSchema = z.object({
   id: z.string().cuid()
 });
 
+export const OrganizationSlugParamsSchema = z.object({
+  slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+});
+
 export const UserRoleSchema = z.enum(["owner", "manager", "staff", "viewer"]);
 export const LeadAiAnalysisJobStatusSchema = z.enum(["pending", "processing", "completed", "failed"]);
 

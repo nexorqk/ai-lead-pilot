@@ -10,6 +10,7 @@ export type AuthenticatedContext = {
   name: string;
   organizationId: string;
   organizationName: string;
+  organizationSlug: string;
   role: UserRole;
 };
 
@@ -66,6 +67,7 @@ export class AuthService {
         organization: {
           id: membership.organization.id,
           name: membership.organization.name,
+          slug: membership.organization.slug,
           role: membership.role
         }
       }
@@ -110,6 +112,7 @@ export class AuthService {
       name: session.user.name,
       organizationId: membership.organizationId,
       organizationName: membership.organization.name,
+      organizationSlug: membership.organization.slug,
       role: membership.role
     };
   }

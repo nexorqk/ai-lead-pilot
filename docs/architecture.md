@@ -8,17 +8,18 @@ LeadPilot AI is a pnpm monorepo:
 - `packages/shared`: Zod schemas, enums, and DTO types.
 - `packages/database`: Prisma schema, client export, and seed data.
 
-The first vertical slice is:
+The lead intake flow is:
 
-1. Customer submits `/book`.
-2. Web posts to `POST /api/leads`.
-3. API validates with Zod, resolves the configured public intake organization, creates or updates the customer, creates the lead and first message.
-4. Owner opens `/admin/leads/:id`.
-5. Owner triggers `POST /api/leads/:id/analyze`.
-6. API creates `LeadAiAnalysisJob`, enqueues BullMQ work in Redis, and returns the queued job id.
-7. Worker processes the job, calls the configured AI provider, validates the output, stores `LeadAiAnalysis`, updates lead status/quality, and marks the job completed or failed.
+1. Customer opens `/:organizationSlug/book`.
+2. Web loads public organization details from `GET /api/public/organizations/:slug`.
+3. Web posts to `POST /api/public/organizations/:slug/leads`.
+4. API validates with Zod, resolves the organization by slug, creates or updates the customer, creates the lead and first message.
+5. Owner opens `/admin/leads/:id`.
+6. Owner triggers `POST /api/leads/:id/analyze`.
+7. API creates `LeadAiAnalysisJob`, enqueues BullMQ work in Redis, and returns the queued job id.
+8. Worker processes the job, calls the configured AI provider, validates the output, stores `LeadAiAnalysis`, updates lead status/quality, and marks the job completed or failed.
 
-Organization scoping is enforced in lead queries. Admin requests authenticate with an HttpOnly session cookie and resolve scope from `OrganizationMember`. Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
+Organization scoping is enforced in lead queries. Admin requests authenticate with an HttpOnly session cookie and resolve scope from `OrganizationMember`. Public lead intake resolves the target organization by slug.
 
 Team management is organization-scoped. Owners can add members, change roles, and remove members; non-owners are blocked from member administration and the service prevents removing or downgrading the final owner. New members without passwords receive a one-time password setup token, stored only as a hash, and activate their login through `/setup-account`. Invite messages are created as notifications and delivered by the same BullMQ worker path as other outbound notifications.
 

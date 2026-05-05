@@ -14,7 +14,7 @@ export default function HomePage() {
             Admin
           </Link>
           <Button asChild size="sm">
-            <Link href="/book">Open intake</Link>
+            <Link href="/demo-studio/book">Open intake</Link>
           </Button>
         </nav>
       </header>
@@ -30,7 +30,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link href="/book">Submit a lead</Link>
+                <Link href="/demo-studio/book">Submit a lead</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/admin/leads">Review leads</Link>

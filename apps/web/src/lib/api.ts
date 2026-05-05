@@ -158,8 +158,23 @@ export type CurrentUser = {
   organization: {
     id: string;
     name: string;
+    slug: string;
     role: string;
   };
+};
+
+export type PublicOrganization = {
+  id: string;
+  name: string;
+  slug: string;
+  timezone: string;
+  services: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    durationMin: number;
+  }>;
 };
 
 export async function login(input: LoginInput) {
@@ -253,6 +268,17 @@ export async function getLead(id: string, cookieHeader?: string) {
 
 export async function createLead(input: CreateLeadInput) {
   return request<{ id: string; status: string }>("/api/leads", {
+    method: "POST",
+    body: JSON.stringify(CreateLeadInputSchema.parse(input))
+  });
+}
+
+export async function getPublicOrganization(slug: string) {
+  return request<PublicOrganization>(`/api/public/organizations/${encodeURIComponent(slug)}`);
+}
+
+export async function createPublicOrganizationLead(slug: string, input: CreateLeadInput) {
+  return request<{ id: string; status: string }>(`/api/public/organizations/${encodeURIComponent(slug)}/leads`, {
     method: "POST",
     body: JSON.stringify(CreateLeadInputSchema.parse(input))
   });

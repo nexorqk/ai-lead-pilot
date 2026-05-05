@@ -154,6 +154,46 @@ describeWithDatabase("API integration", () => {
     expect(leads.json<Array<{ id: string }>>().some((lead) => lead.id === created.id)).toBe(true);
   });
 
+  it("creates public organization leads by slug", async () => {
+    const { organization } = await seedTestData();
+    app = await buildApp(config, prisma);
+    await app.ready();
+
+    const publicOrganization = await app.inject({
+      method: "GET",
+      url: `/api/public/organizations/${organization.slug}`
+    });
+    expect(publicOrganization.statusCode).toBe(200);
+    expect(publicOrganization.json<{ slug: string; services: Array<{ slug: string }> }>().slug).toBe(organization.slug);
+    expect(publicOrganization.json<{ slug: string; services: Array<{ slug: string }> }>().services.some((service) => service.slug === "consultation")).toBe(true);
+
+    const createLead = await app.inject({
+      method: "POST",
+      url: `/api/public/organizations/${organization.slug}/leads`,
+      payload: {
+        customer: { name: "Slug Customer", email: "slug-customer@example.com" },
+        serviceSlug: "consultation",
+        message: "I need a consultation from this specific organization page.",
+        preferredDate: "2026-05-06",
+        preferredTime: "11:00"
+      }
+    });
+    expect(createLead.statusCode).toBe(201);
+
+    const lead = await prisma.lead.findUnique({
+      where: { id: createLead.json<{ id: string }>().id },
+      include: { customer: true }
+    });
+    expect(lead?.organizationId).toBe(organization.id);
+    expect(lead?.customer.email).toBe("slug-customer@example.com");
+
+    const missing = await app.inject({
+      method: "GET",
+      url: "/api/public/organizations/not-a-real-org"
+    });
+    expect(missing.statusCode).toBe(404);
+  });
+
   it("prevents overlapping bookings for the same organization", async () => {
     const { organization, user } = await seedTestData();
     app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);

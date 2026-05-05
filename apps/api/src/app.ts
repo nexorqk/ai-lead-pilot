@@ -20,6 +20,7 @@ import { authRoutes } from "./routes/auth.js";
 import { bookingRoutes } from "./routes/bookings.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { teamRoutes } from "./routes/team.js";
+import { publicRoutes } from "./routes/public.js";
 import { createLeadAnalysisQueue } from "./queue/lead-analysis-queue.js";
 import { createNotificationQueue } from "./queue/notification-queue.js";
 
@@ -114,6 +115,16 @@ export async function buildApp(config: AppConfig, prisma: PrismaClient) {
     analysisQueue: analysisQueueResources?.queue,
     cookieName: config.SESSION_COOKIE_NAME,
     configuredDemoOrganizationId: config.DEMO_ORGANIZATION_ID,
+    publicRateLimit: {
+      max: config.PUBLIC_RATE_LIMIT_MAX,
+      timeWindow: config.PUBLIC_RATE_LIMIT_WINDOW
+    }
+  });
+  await app.register(publicRoutes, {
+    prisma,
+    leadService,
+    notificationService,
+    auditService,
     publicRateLimit: {
       max: config.PUBLIC_RATE_LIMIT_MAX,
       timeWindow: config.PUBLIC_RATE_LIMIT_WINDOW

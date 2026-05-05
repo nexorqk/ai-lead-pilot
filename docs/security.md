@@ -21,9 +21,8 @@ Current controls:
 - OpenAI provider only runs when selected and configured with an API key.
 - AI prompts avoid sending secrets and only include the lead fields needed for analysis.
 
-Temporary shortcut:
+Current gaps:
 
-- Public lead intake still uses `DEMO_ORGANIZATION_ID` or the first seeded organization until public business pages support organization slugs.
 - Registration, password reset, real SMTP/Telegram invite delivery, account lockout, and MFA are not implemented.
 
 Do not add:
