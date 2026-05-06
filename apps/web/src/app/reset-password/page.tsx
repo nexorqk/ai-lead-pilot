@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@leadpilot/ui/components/ui/button";
@@ -10,6 +10,14 @@ import { Label } from "@leadpilot/ui/components/ui/label";
 import { getPasswordResetPreview, completePasswordReset } from "@/lib/api";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -131,6 +139,18 @@ export default function ResetPasswordPage() {
             </form>
           )}
         </CardContent>
+      </Card>
+    </main>
+  );
+}
+
+function ResetPasswordLoading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Loading...</CardTitle>
+        </CardHeader>
       </Card>
     </main>
   );

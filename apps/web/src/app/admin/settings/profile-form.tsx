@@ -67,7 +67,7 @@ export function OrganizationProfileForm({ profile, canManage }: { profile: Organ
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 grid gap-6">
+    <form onSubmit={onSubmit} className="grid gap-6">
       <Card className="rounded-lg border-line bg-white">
         <CardHeader>
           <CardTitle className="text-xl">Public profile</CardTitle>

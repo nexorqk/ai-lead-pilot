@@ -6,13 +6,15 @@ import {
   UpdateOrganizationProfileInputSchema,
   ForgotPasswordInputSchema,
   ResetPasswordInputSchema,
+  UpdateAvailabilityRulesInputSchema,
   type CreateLeadInput,
   type LoginInput,
   type TeamMemberInput,
   type PasswordSetupInput,
   type UpdateOrganizationProfileInput,
   type ForgotPasswordInput,
-  type ResetPasswordInput
+  type ResetPasswordInput,
+  type UpdateAvailabilityRulesInput
 } from "@leadpilot/shared";
 
 const apiBaseUrl =
@@ -230,6 +232,13 @@ export async function getBookings(cookieHeader?: string) {
 export async function getAvailability(cookieHeader?: string) {
   return request<AvailabilityRule[]>("/api/availability", {
     headers: cookieHeader ? { cookie: cookieHeader } : undefined
+  });
+}
+
+export async function updateAvailability(input: UpdateAvailabilityRulesInput) {
+  return request<AvailabilityRule[]>("/api/availability", {
+    method: "PATCH",
+    body: JSON.stringify(UpdateAvailabilityRulesInputSchema.parse(input))
   });
 }
 

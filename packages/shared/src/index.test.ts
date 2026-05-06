@@ -9,6 +9,7 @@ import {
   OrganizationSlugParamsSchema,
   PasswordSetupInputSchema,
   TeamMemberInputSchema,
+  UpdateAvailabilityRulesInputSchema,
   UpdateOrganizationProfileInputSchema
 } from "./index.js";
 
@@ -102,5 +103,15 @@ describe("shared schemas", () => {
 
     expect(parsed.services[0]?.durationMin).toBe(60);
     expect(UpdateOrganizationProfileInputSchema.safeParse({ ...parsed, slug: "Bad Slug" }).success).toBe(false);
+  });
+
+  it("validates availability rule settings", () => {
+    const parsed = UpdateAvailabilityRulesInputSchema.parse({
+      rules: [{ dayOfWeek: "2", startTime: "09:00", endTime: "17:00" }]
+    });
+
+    expect(parsed.rules[0]?.dayOfWeek).toBe(2);
+    expect(UpdateAvailabilityRulesInputSchema.safeParse({ rules: [{ dayOfWeek: 2, startTime: "17:00", endTime: "09:00" }] }).success).toBe(false);
+    expect(UpdateAvailabilityRulesInputSchema.safeParse({ rules: [{ dayOfWeek: 8, startTime: "09:00", endTime: "17:00" }] }).success).toBe(false);
   });
 });

@@ -144,6 +144,23 @@ export const CreateLeadBookingInputSchema = z.object({
   status: BookingStatusSchema.default("requested")
 });
 
+const TimeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm time");
+
+export const AvailabilityRuleInputSchema = z
+  .object({
+    dayOfWeek: z.coerce.number().int().min(0).max(6),
+    startTime: TimeOfDaySchema,
+    endTime: TimeOfDaySchema
+  })
+  .refine((value) => value.startTime < value.endTime, {
+    message: "End time must be after start time",
+    path: ["endTime"]
+  });
+
+export const UpdateAvailabilityRulesInputSchema = z.object({
+  rules: z.array(AvailabilityRuleInputSchema).max(14)
+});
+
 export type CustomerInput = z.infer<typeof CustomerInputSchema>;
 export type CreateLeadInput = z.infer<typeof CreateLeadInputSchema>;
 export type LeadAiAnalysis = z.infer<typeof LeadAiAnalysisSchema>;
@@ -161,6 +178,8 @@ export type TeamMemberInput = z.infer<typeof TeamMemberInputSchema>;
 export type UpdateTeamMemberRoleInput = z.infer<typeof UpdateTeamMemberRoleInputSchema>;
 export type BookingStatus = z.infer<typeof BookingStatusSchema>;
 export type CreateLeadBookingInput = z.infer<typeof CreateLeadBookingInputSchema>;
+export type AvailabilityRuleInput = z.infer<typeof AvailabilityRuleInputSchema>;
+export type UpdateAvailabilityRulesInput = z.infer<typeof UpdateAvailabilityRulesInputSchema>;
 export type PublicServiceInput = z.infer<typeof PublicServiceInputSchema>;
 export type UpdateOrganizationProfileInput = z.infer<typeof UpdateOrganizationProfileInputSchema>;
 

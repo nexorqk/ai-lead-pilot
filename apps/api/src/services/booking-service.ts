@@ -1,5 +1,5 @@
 import type { BookingStatus, PrismaClient } from "@prisma/client";
-import { CreateLeadBookingInputSchema } from "@leadpilot/shared";
+import { CreateLeadBookingInputSchema, UpdateAvailabilityRulesInputSchema, type AvailabilityRuleInput } from "@leadpilot/shared";
 import { AppError } from "../utils/errors.js";
 
 export class BookingService {
@@ -116,6 +116,55 @@ export class BookingService {
       where: { organizationId, active: true },
       orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }]
     });
+  }
+
+  async updateAvailabilityRules(organizationId: string, rawInput: unknown) {
+    const input = UpdateAvailabilityRulesInputSchema.parse(rawInput);
+    this.ensureUniqueAvailabilityRules(input.rules);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.availabilityRule.updateMany({
+        where: { organizationId, active: true },
+        data: { active: false }
+      });
+
+      for (const rule of input.rules) {
+        await tx.availabilityRule.upsert({
+          where: {
+            organizationId_dayOfWeek_startTime_endTime: {
+              organizationId,
+              dayOfWeek: rule.dayOfWeek,
+              startTime: rule.startTime,
+              endTime: rule.endTime
+            }
+          },
+          update: { active: true },
+          create: {
+            organizationId,
+            dayOfWeek: rule.dayOfWeek,
+            startTime: rule.startTime,
+            endTime: rule.endTime,
+            active: true
+          }
+        });
+      }
+
+      return tx.availabilityRule.findMany({
+        where: { organizationId, active: true },
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }]
+      });
+    });
+  }
+
+  private ensureUniqueAvailabilityRules(rules: AvailabilityRuleInput[]) {
+    const keys = new Set<string>();
+    for (const rule of rules) {
+      const key = `${rule.dayOfWeek}:${rule.startTime}:${rule.endTime}`;
+      if (keys.has(key)) {
+        throw new AppError(400, "DUPLICATE_AVAILABILITY_RULE", "Availability rules must be unique");
+      }
+      keys.add(key);
+    }
   }
 
   private async ensureInsideAvailability(organizationId: string, startsAt: Date, endsAt: Date) {

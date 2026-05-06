@@ -31,6 +31,21 @@ export const bookingRoutes: FastifyPluginAsync<{
     return options.bookingService.availabilityRules(context.organizationId);
   });
 
+  app.patch("/api/availability", async (request) => {
+    const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);
+    requireRole(context, ["owner"]);
+    const rules = await options.bookingService.updateAvailabilityRules(context.organizationId, request.body);
+    await options.auditService.record({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      action: "availability.updated",
+      entityType: "Organization",
+      entityId: context.organizationId,
+      metadata: { ruleCount: rules.length }
+    });
+    return rules;
+  });
+
   app.post("/api/leads/:id/bookings", async (request, reply) => {
     const { id } = LeadIdParamsSchema.parse(request.params);
     const context = await options.authService.getContextFromToken(request.cookies[options.cookieName]);

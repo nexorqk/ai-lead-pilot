@@ -324,6 +324,64 @@ describeWithDatabase("API integration", () => {
     expect(overlap.json().error.code).toBe("BOOKING_CONFLICT");
   });
 
+  it("lets owners update availability and enforces it for bookings", async () => {
+    const { organization, user } = await seedTestData();
+    app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);
+    await app.ready();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: user.email, password: "password-123" }
+    });
+    const cookie = login.headers["set-cookie"];
+    const headers = { cookie: Array.isArray(cookie) ? cookie.join("; ") : cookie ?? "" };
+
+    const update = await app.inject({
+      method: "PATCH",
+      url: "/api/availability",
+      headers,
+      payload: {
+        rules: [{ dayOfWeek: 2, startTime: "13:00", endTime: "17:00" }]
+      }
+    });
+    expect(update.statusCode).toBe(200);
+    expect(update.json<Array<{ dayOfWeek: number; startTime: string }>>()).toMatchObject([{ dayOfWeek: 2, startTime: "13:00" }]);
+
+    const leadResponse = await app.inject({
+      method: "POST",
+      url: "/api/leads",
+      payload: {
+        customer: { name: "Availability Customer", email: "availability@example.com" },
+        serviceSlug: "consultation",
+        message: "I need a consultation next Tuesday afternoon.",
+        preferredDate: "2026-05-05",
+        preferredTime: "14:00"
+      }
+    });
+    const lead = leadResponse.json<{ id: string }>();
+
+    const outside = await app.inject({
+      method: "POST",
+      url: `/api/leads/${lead.id}/bookings`,
+      headers,
+      payload: { startsAt: "2026-05-05T10:00:00.000Z", status: "requested" }
+    });
+    expect(outside.statusCode).toBe(422);
+    expect(outside.json().error.code).toBe("OUTSIDE_AVAILABILITY");
+
+    const inside = await app.inject({
+      method: "POST",
+      url: `/api/leads/${lead.id}/bookings`,
+      headers,
+      payload: { startsAt: "2026-05-05T14:00:00.000Z", status: "requested" }
+    });
+    expect(inside.statusCode).toBe(201);
+
+    const audit = await prisma.auditLog.findMany({ where: { organizationId: organization.id, action: "availability.updated" } });
+    expect(audit).toHaveLength(1);
+  });
+
   it("lets owners add team members and blocks duplicate memberships", async () => {
     const { organization, user } = await seedTestData();
     app = await buildApp({ ...config, DEMO_ORGANIZATION_ID: organization.id }, prisma);
